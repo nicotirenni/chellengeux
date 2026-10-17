@@ -21,6 +21,6 @@
 .snack__action:focus-visible { outline: 2px solid var(--color-text-brand-on-inverse); }
 .snack__time { height: 3px; overflow: hidden; }
 .snack__bar { height: 3px; background: var(--color-text-brand-on-inverse); transform-origin: left center; }
-.snack-host--raised { bottom: 96px; }
+.snack-host--raised { bottom: calc(148px + env(safe-area-inset-bottom)); }
 .snack__close { all: unset; cursor: pointer; display: flex; margin-right: -4px; border-radius: var(--radius-sm); opacity: 0.8; }
 .snack__close:focus-visible { outline: 2px solid var(--color-text-brand-on-inverse); }

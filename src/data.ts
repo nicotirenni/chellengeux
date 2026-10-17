@@ -28,7 +28,19 @@ export type EventItem = {
 
 export const ORGANIZER = 'Carla';
 export const EVENT_TYPES = ['Casamiento', 'Cumpleaños', 'Bautismo', 'Aniversario', 'Otro'];
-export const TEAM = ['Carla', 'Martín', 'Sofía', 'Lucía', 'Pablo'];
+
+/** Contactos de Carla: de acá salen los colaboradores que se suman a un evento. */
+export type Contact = { name: string; fullName: string; email: string };
+export const CONTACTS: Contact[] = [
+  { name: 'Martín', fullName: 'Martín Gómez', email: 'martin.gomez@gmail.com' },
+  { name: 'Sofía', fullName: 'Sofía Ocampo', email: 'sofi.ocampo@gmail.com' },
+  { name: 'Lucía', fullName: 'Lucía Ferreyra', email: 'lucia.ferreyra@hotmail.com' },
+  { name: 'Pablo', fullName: 'Pablo Ríos', email: 'pablo.rios@gmail.com' },
+  { name: 'Valentina', fullName: 'Valentina Paz', email: 'vale.paz@gmail.com' },
+  { name: 'Joaquín', fullName: 'Joaquín Sosa', email: 'joaco.sosa@outlook.com' },
+  { name: 'Camila', fullName: 'Camila Herrera', email: 'cami.herrera@gmail.com' },
+  { name: 'Tomás', fullName: 'Tomás Acosta', email: 'tomas.acosta@gmail.com' },
+];
 /** Hoy en el prototipo: viernes 16 OCT 2026, 14:00. El Figma dice "En 9 días" para el 25 OCT. */
 export const TODAY = '2026-10-16';
 export const TODAY_LABEL = '16 OCT';
@@ -160,3 +172,18 @@ export const withWeekday = (date: string) => {
 /** Orden de la lista: fecha y hora ascendente, finalizadas al final. */
 export const byDue = (a: Task, b: Task) =>
   Number(a.status === 'finalizado') - Number(b.status === 'finalizado') || sortKey(a.date, a.time) - sortKey(b.date, b.time);
+
+/** "25 OCT" + n días → "27 OCT" (con la misma regla de año que sortKey). */
+export const shiftDate = (date: string, days: number) => {
+  const [d, m] = date.split(' ');
+  const month = MONTH_NUM[m] ?? 1;
+  const year = Number(TODAY.slice(0, 4)) + (month < Number(TODAY.slice(5, 7)) ? 1 : 0);
+  const next = new Date(Date.UTC(year, month - 1, Number(d)) + days * 86_400_000);
+  return `${String(next.getUTCDate()).padStart(2, '0')} ${MONTH_NAME[next.getUTCMonth() + 1]}`;
+};
+
+/** "25 OCT 2026" → "25 OCT". */
+export const eventDay = (ev: Pick<EventItem, 'date'>) => ev.date.split(' ').slice(0, 2).join(' ');
+
+/** Sin tildes y en minúscula, para buscar. */
+export const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

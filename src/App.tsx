@@ -8,6 +8,8 @@ import { NavProvider, useNav, type Route, type Tab } from './nav';
 import { Calendar } from './screens/Calendar';
 import { EventScreen } from './screens/Event';
 import { Home } from './screens/Home';
+import { AddPeople } from './screens/AddPeople';
+import { EditEvent } from './screens/EditEvent';
 import { NewEvent } from './screens/NewEvent';
 import { Notices } from './screens/Notices';
 import { Search } from './screens/Search';
@@ -28,6 +30,8 @@ function Screen({ route, active }: { route: Route; active: boolean }) {
     case 'edit': return <TaskForm taskId={route.taskId} />;
     case 'newTask': return <TaskForm eventId={route.eventId} />;
     case 'newEvent': return <NewEvent />;
+    case 'editEvent': return <EditEvent eventId={route.eventId} />;
+    case 'addPeople': return <AddPeople eventId={route.eventId} />;
   }
 }
 

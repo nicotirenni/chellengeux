@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
 import {
-  ORGANIZER, STATUS_LABEL, listNames, seedEvents, seedTasks,
+  ORGANIZER, STATUS_LABEL, listNames, seedEvents, seedTasks, shiftDate,
   type EventItem, type Priority, type Task, type TaskStatus,
 } from './data';
 
@@ -30,7 +30,8 @@ export type Activity = {
 
 export type TaskPatch = Partial<Pick<Task, 'title' | 'date' | 'time' | 'assignee' | 'priority'>>;
 export type NewTask = { eventId: string; title: string; date: string; time: string; assignee: string; priority?: Priority };
-export type NewEvent = { type: string; name: string; date: string; iso: string };
+export type NewEvent = { type: string; name: string; date: string; iso: string; people: string[] };
+export type EventPatch = { type: string; name: string; date: string; iso: string };
 
 type Store = {
   events: EventItem[];
@@ -44,6 +45,9 @@ type Store = {
   updateTask: (id: string, patch: TaskPatch) => Promise<boolean>;
   createTask: (t: NewTask) => Promise<boolean>;
   createEvent: (e: NewEvent) => Promise<string | null>;
+  /** Con moveTasks, las tareas se corren los mismos días que el evento. */
+  updateEvent: (id: string, patch: EventPatch, moveTasks: boolean) => Promise<boolean>;
+  addPeople: (eventId: string, people: string[]) => Promise<boolean>;
   setStatus: (id: string, status: TaskStatus) => void;
   deleteEvent: (id: string) => void;
   /** Martín guarda un cambio de horario mientras Carla tiene la tarea abierta (F6 · 3a). */
@@ -222,12 +226,60 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         show({ kind: 'error', message: 'No se pudo crear el evento' });
         return null;
       }
-      const ev: EventItem = { id: `e${seq++}`, type: e.type, name: e.name, shortName: e.name, date: `${e.date} ${e.iso.slice(0, 4)}`, iso: e.iso, people: [] };
+      const ev: EventItem = { id: `e${seq++}`, type: e.type, name: e.name, shortName: e.name, date: `${e.date} ${e.iso.slice(0, 4)}`, iso: e.iso, people: e.people };
       setEvents((es) => [...es, ev].sort((a, b) => a.iso.localeCompare(b.iso)));
+      notify(e.people, `${ME} te sumó a «${ev.name}»`, ev.shortName);
       show({ kind: 'confirm', message: `“${ev.name}” creado`, duration: CONFIRM_MS });
       return ev.id;
     },
-    [show],
+    [notify, show],
+  );
+
+  const updateEvent = useCallback(
+    async (id: string, patch: EventPatch, moveTasks: boolean) => {
+      const ev = eventsRef.current.find((e) => e.id === id);
+      if (!ev) return false;
+      try {
+        await request();
+      } catch {
+        show({ kind: 'error', message: 'No se pudieron guardar los cambios' });
+        return false;
+      }
+      const next: EventItem = {
+        ...ev, type: patch.type, name: patch.name, iso: patch.iso,
+        date: `${patch.date} ${patch.iso.slice(0, 4)}`,
+        shortName: patch.name === ev.name ? ev.shortName : patch.name,
+      };
+      setEvents((es) => es.map((e) => (e.id === id ? next : e)).sort((a, b) => a.iso.localeCompare(b.iso)));
+      const days = Math.round((Date.parse(patch.iso) - Date.parse(ev.iso)) / 86_400_000);
+      if (moveTasks && days !== 0)
+        setTasks((ts) => ts.map((t) => (t.eventId === id ? { ...t, date: shiftDate(t.date, days) } : t)));
+      notify(
+        ev.people,
+        next.date !== ev.date ? `${ME} pasó «${next.shortName}» al ${patch.date}` : `${ME} editó «${next.shortName}»`,
+        next.shortName,
+      );
+      show({ kind: 'confirm', message: 'Cambios guardados', duration: CONFIRM_MS });
+      return true;
+    },
+    [notify, show],
+  );
+
+  const addPeople = useCallback(
+    async (eventId: string, people: string[]) => {
+      const ev = eventsRef.current.find((e) => e.id === eventId);
+      if (!ev) return false;
+      try {
+        await request();
+      } catch {
+        show({ kind: 'error', message: 'No se pudieron agregar' });
+        return false;
+      }
+      setEvents((es) => es.map((e) => (e.id === eventId ? { ...e, people: [...new Set([...e.people, ...people])] } : e)));
+      notify(people, `${ME} te sumó a «${ev.shortName}»`, ev.shortName);
+      return true;
+    },
+    [notify, show],
   );
 
   const setStatus = useCallback(
@@ -324,7 +376,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider
       value={{
         events, tasks, hidden, snack, activity, unread, markRead,
-        deleteTask, updateTask, createTask, createEvent, setStatus, deleteEvent, applyRemoteEdit, undo, expireSnack, snackAction,
+        deleteTask, updateTask, createTask, createEvent, updateEvent, addPeople, setStatus, deleteEvent, applyRemoteEdit, undo, expireSnack, snackAction,
       }}
     >
       {children}

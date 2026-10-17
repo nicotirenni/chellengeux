@@ -6,7 +6,7 @@ export type IconName =
   | 'clock' | 'alert' | 'alert-inverse' | 'back' | 'menu' | 'more' | 'trash' | 'undo'
   | 'calendar-16' | 'users-16' | 'users-18' | 'nav-home' | 'nav-calendar' | 'nav-plus' | 'nav-bell' | 'nav-search'
   | 'close' | 'edit' | 'move' | 'trash-danger'
-  | 'close-inverse' | 'nav-home-active' | 'nav-calendar-active' | 'nav-bell-active' | 'nav-search-active';
+  | 'close-inverse' | 'megaphone' | 'users-accent' | 'check-inverse' | 'nav-home-active' | 'nav-calendar-active' | 'nav-bell-active' | 'nav-search-active';
 
 /** Íconos exportados del Figma (frame 7:2). El color viene horneado en cada SVG. */
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {
@@ -102,6 +102,25 @@ export function IconLabel({ danger, children }: { danger?: boolean; children: Re
     <span className={`icon-label t-leyenda ${danger ? 'icon-label--danger' : ''}`}>
       {danger ? <Icon name="alert" size={20} /> : <Icon name="clock" size={16} />}
       {children}
+    </span>
+  );
+}
+
+/** Alert (estilo shadcn): nota informativa de los formularios, con megáfono. */
+export function Alert({ children }: { children: ReactNode }) {
+  return (
+    <div className="alert" role="note">
+      <Icon name="megaphone" size={24} />
+      <p className="alert__text">{children}</p>
+    </div>
+  );
+}
+
+/** Checkbox circular de 24 px: relleno en accent con tilde blanca cuando está elegido. */
+export function Check({ checked }: { checked: boolean }) {
+  return (
+    <span className={`check ${checked ? 'is-checked' : ''}`} aria-hidden>
+      {checked && <Icon name="check-inverse" size={16} />}
     </span>
   );
 }

@@ -7,7 +7,9 @@ export type Route =
   | { name: 'event'; eventId: string; openTaskId?: string }
   | { name: 'edit'; taskId: string }
   | { name: 'newTask'; eventId?: string }
-  | { name: 'newEvent' };
+  | { name: 'newEvent' }
+  | { name: 'editEvent'; eventId: string }
+  | { name: 'addPeople'; eventId: string };
 
 type Nav = {
   stack: Route[];

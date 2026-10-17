@@ -254,7 +254,7 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
       </div>
 
       {tab === 'equipo' ? (
-        <Team ev={ev} tasks={all} />
+        <Team ev={ev} tasks={all} onAdd={() => push({ name: 'addPeople', eventId })} />
       ) : (
         <>
 
@@ -345,8 +345,8 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
       {/* F3 · 2. Opciones del evento */}
       <Drawer open={sheet?.kind === 'options'} onClose={close} title={ev.shortName}>
         <div className="options" role="menu">
-          <button type="button" role="menuitem" className="options__item t-cuerpo" disabled>
-            <Icon name="edit" />Editar evento<span className="options__soon t-leyenda">Próximamente</span>
+          <button type="button" role="menuitem" className="options__item t-cuerpo" onClick={() => { close(); push({ name: 'editEvent', eventId }); }}>
+            <Icon name="edit" />Editar evento
           </button>
           <button type="button" role="menuitem" className="options__item options__item--danger t-cuerpo" onClick={() => setSheet({ kind: 'delete' })}>
             <Icon name="trash-danger" />Eliminar evento
@@ -404,20 +404,33 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
   );
 }
 
-function Team({ ev, tasks }: { ev: EventItem; tasks: Task[] }) {
+function Team({ ev, tasks, onAdd }: { ev: EventItem; tasks: Task[]; onAdd: () => void }) {
+  // Evento creado sin colaboradores: estado vacío con la acción para sumarlos.
+  if (ev.people.length === 0)
+    return (
+      <div className="team-empty">
+        <span className="team-empty__icon"><Icon name="users-accent" size={32} /></span>
+        <h2 className="t-subtitulo">Todavía no hay colaboradores</h2>
+        <p className="t-cuerpo">Sumá personas para repartir las tareas y avisarles de los cambios.</p>
+        <Button onClick={onAdd}>Agregar colaboradores</Button>
+      </div>
+    );
   const people = [ORGANIZER, ...ev.people];
   return (
-    <ul className="team">
-      {people.map((p) => {
-        const n = tasks.filter((t) => t.assignee === p).length;
-        return (
-          <li key={p} className="team__row">
-            <Avatar name={p} />
-            <span className="t-cuerpo-destacado">{p}</span>
-            <span className="t-leyenda muted">{p === ORGANIZER ? 'Organiza' : 'Ayuda'} · {n} {n === 1 ? 'tarea' : 'tareas'}</span>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="team">
+      <ul className="team__list">
+        {people.map((p) => {
+          const n = tasks.filter((t) => t.assignee === p).length;
+          return (
+            <li key={p} className="team__row">
+              <Avatar name={p} />
+              <span className="t-cuerpo-destacado">{p}</span>
+              <span className="t-leyenda muted">{p === ORGANIZER ? 'Organiza' : 'Ayuda'} · {n} {n === 1 ? 'tarea' : 'tareas'}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <Button variant="secondary" onClick={onAdd}>Agregar colaboradores</Button>
+    </div>
   );
 }

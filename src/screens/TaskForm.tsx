@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Avatar, Button, FilterChip, Icon } from '../components/base';
+import { Alert, Button, FilterChip, Icon } from '../components/base';
 import { Drawer, DrawerActions } from '../components/Drawer';
-import { ORGANIZER, TEAM, listNames, sortKey, upcomingDates, type Priority } from '../data';
-
-const DATES = upcomingDates(60, true).map((d) => d.label);
+import { ORGANIZER, eventDay, listNames, sortKey, upcomingDates, type Priority } from '../data';
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import './Form.css';
+
+const DATES = upcomingDates(60, true).map((d) => d.label);
 
 // Horarios cada 15 min, en 24 h (el input type="time" muestra AM/PM según el navegador).
 const TIMES = Array.from({ length: 24 * 4 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`);
@@ -16,17 +16,17 @@ const CONFLICT_AFTER_MS = 6000;
 
 const PRIORITIES: (Priority | undefined)[] = [undefined, 'Baja', 'Media', 'Alta'];
 
-/** F6 · 3. Editar tarea. Sin taskId, crea una tarea nueva (desde el botón Crear). */
+/** F6 · 3. Editar tarea. Sin taskId, es Crear tarea: el mismo formulario con los campos vacíos. */
 export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: string }) {
   const { tasks, events, updateTask, createTask, applyRemoteEdit } = useStore();
   const { pop } = useNav();
   const task = taskId ? tasks.find((t) => t.id === taskId) : undefined;
   const [initial] = useState(() => ({
-    eventId: task?.eventId ?? eventId ?? events[0]?.id ?? '',
+    eventId: task?.eventId ?? eventId ?? '',
     title: task?.title ?? '',
-    date: task?.date ?? DATES[0],
-    time: task?.time ?? '10:00',
-    assignee: task?.assignee ?? ORGANIZER,
+    date: task?.date ?? '',
+    time: task?.time ?? '',
+    assignee: task?.assignee ?? '',
     priority: task?.priority,
   }));
   const [form, setForm] = useState(initial);
@@ -56,16 +56,26 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
     k === 'title' ? form.title.trim() !== initial.title : form[k] !== initial[k],
   );
   const valid = form.title.trim().length > 0 && !!form.eventId;
-  const notified = [...new Set([form.assignee, task?.assignee ?? form.assignee])].filter((p) => p !== ORGANIZER);
-  const dates = [...new Set([initial.date, ...DATES])].sort((a, b) => sortKey(a) - sortKey(b));
-  const times = [...new Set([...TIMES, initial.time, ...(remote ? [remote.time] : [])])].sort();
+  const ev = events.find((e) => e.id === form.eventId);
+  const notified = [...new Set([form.assignee, task?.assignee ?? form.assignee])].filter((p) => p && p !== ORGANIZER);
+  const people = [...new Set([ORGANIZER, ...(ev?.people ?? []), ...(task ? [task.assignee] : [])])];
+  const dates = [...new Set([...(initial.date ? [initial.date] : []), ...DATES])].sort((a, b) => sortKey(a) - sortKey(b));
+  const times = [...new Set([...TIMES, ...(initial.time ? [initial.time] : []), ...(remote ? [remote.time] : [])])].sort();
+  const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
 
   const save = async () => {
     setSheet(null);
     setSaving(true);
     savingRef.current = true;
-    const { eventId: ev, ...fields } = { ...form, title: form.title.trim() };
-    const ok = task ? await updateTask(task.id, fields) : await createTask({ eventId: ev, ...fields });
+    // Lo que quedó sin elegir al crear: el día del evento, a las 10:00, a cargo de Carla.
+    const { eventId: evId, ...fields } = {
+      ...form,
+      title: form.title.trim(),
+      date: form.date || (ev ? eventDay(ev) : DATES[0]),
+      time: form.time || '10:00',
+      assignee: form.assignee || ORGANIZER,
+    };
+    const ok = task ? await updateTask(task.id, fields) : await createTask({ eventId: evId, ...fields });
     setSaving(false);
     savingRef.current = false;
     if (ok) pop();
@@ -88,16 +98,23 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
     void save();
   };
 
+  const empty = (v: string) => (v ? '' : 'is-empty');
+
   return (
     <div className="form-screen">
-      <nav className="form-screen__nav">
-        <button type="button" className="icon-btn" aria-label="Cerrar sin guardar" onClick={onClose}>
-          <Icon name="close" />
-        </button>
-      </nav>
-      <h1 className="t-titulo form-screen__title">{creating ? 'Nueva tarea' : 'Editar tarea'}</h1>
+      <h1 className="t-titulo form-screen__title">{creating ? 'Crear tarea' : 'Editar tarea'}</h1>
 
       <div className="form-screen__body">
+        {creating && !eventId && (
+          <label className="field">
+            <span className="field__label t-leyenda">Evento</span>
+            <select className={`field__input t-cuerpo ${empty(form.eventId)}`} value={form.eventId} onChange={(e) => set({ eventId: e.target.value, assignee: '' })}>
+              <option value="" disabled hidden>Elegí un evento</option>
+              {events.map((e) => <option key={e.id} value={e.id}>{e.shortName}</option>)}
+            </select>
+          </label>
+        )}
+
         <label className="field">
           <span className="field__label t-leyenda">Nombre</span>
           <input
@@ -105,30 +122,21 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
             value={form.title}
             maxLength={60}
             placeholder={creating ? 'Por ejemplo, Comprar hielo' : undefined}
-            autoFocus={creating}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            onChange={(e) => set({ title: e.target.value })}
             aria-invalid={(!creating && !form.title.trim()) || undefined}
           />
           {!creating && !form.title.trim() && <span className="field__error t-leyenda"><Icon name="alert" size={20} />Escribí un nombre</span>}
         </label>
 
-        {creating && (
-          <label className="field">
-            <span className="field__label t-leyenda">Evento</span>
-            <select className="field__input t-cuerpo" value={form.eventId} onChange={(e) => setForm({ ...form, eventId: e.target.value })}>
-              {events.map((e) => <option key={e.id} value={e.id}>{e.shortName}</option>)}
-            </select>
-          </label>
-        )}
-
         <fieldset className="field">
-          <legend className="field__label t-leyenda">Fecha y horario</legend>
+          <legend className="field__label t-leyenda">Fecha y hora</legend>
           <div className={`field__pair ${reviewed ? 'is-reviewed' : ''}`}>
-            <select className="field__input t-cuerpo" aria-label="Fecha" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })}>
+            <select className={`field__input t-cuerpo ${empty(form.date)}`} aria-label="Fecha" value={form.date} onChange={(e) => set({ date: e.target.value })}>
+              <option value="" disabled hidden>Fecha</option>
               {dates.map((d) => <option key={d}>{d}</option>)}
             </select>
-            <span className="muted" aria-hidden>·</span>
-            <select className="field__input t-cuerpo" aria-label="Horario" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })}>
+            <select className={`field__input t-cuerpo ${empty(form.time)}`} aria-label="Hora" value={form.time} onChange={(e) => set({ time: e.target.value })}>
+              <option value="" disabled hidden>Hora</option>
               {times.map((t) => <option key={t}>{t}</option>)}
             </select>
           </div>
@@ -141,8 +149,9 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
 
         <label className="field">
           <span className="field__label t-leyenda">Responsable</span>
-          <select className="field__input t-cuerpo" value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })}>
-            {TEAM.map((p) => <option key={p}>{p}</option>)}
+          <select className={`field__input t-cuerpo ${empty(form.assignee)}`} value={form.assignee} onChange={(e) => set({ assignee: e.target.value })}>
+            <option value="" disabled hidden>Elegí a alguien</option>
+            {people.map((p) => <option key={p}>{p}</option>)}
           </select>
         </label>
 
@@ -150,23 +159,25 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
           <legend className="field__label t-leyenda">Prioridad</legend>
           <div className="field__chips">
             {PRIORITIES.map((p) => (
-              <FilterChip key={p ?? 'none'} active={form.priority === p} onClick={() => setForm({ ...form, priority: p })}>
+              <FilterChip key={p ?? 'none'} active={form.priority === p} onClick={() => set({ priority: p })}>
                 {p ?? 'Sin prioridad'}
               </FilterChip>
             ))}
           </div>
         </fieldset>
 
-        {notified.length > 0 && (
-          <div className="notify-box t-leyenda">
-            {notified.map((p) => <Avatar key={p} name={p} />)}
-            <span>{listNames(notified)} {notified.length === 1 ? 'recibe' : 'reciben'} un aviso al guardar</span>
-          </div>
+        {creating ? (
+          <Alert>La persona responsable recibe un aviso al crear la tarea.</Alert>
+        ) : (
+          notified.length > 0 && (
+            <Alert>{listNames(notified)} {notified.length === 1 ? 'recibe' : 'reciben'} un aviso al guardar la tarea.</Alert>
+          )
         )}
       </div>
 
       <div className="form-screen__footer">
-        <Button onClick={onSave} disabled={!dirty || !valid} loading={saving}>{creating ? 'Crear tarea' : 'Guardar'}</Button>
+        <Button onClick={onSave} disabled={creating ? !valid : !dirty || !valid} loading={saving}>{creating ? 'Crear tarea' : 'Guardar'}</Button>
+        <Button variant="text" onClick={onClose}>Cancelar</Button>
       </div>
 
       {/* 5 · Cerrar sin guardar */}
