@@ -78,10 +78,7 @@
 .tasklist__head { display: flex; align-items: center; justify-content: space-between; }
 .tasklist__head h2, .tasklist__head h3 { margin: 0; color: var(--color-text-primary); }
 .tasklist__head span { color: var(--color-text-secondary); }
-.tasklist__head--1 { padding-top: 8px; }
-.tasklist__row + .tasklist__row .tasklist__head--2 { padding-top: 0; }
-.tasklist__head--2 { padding-top: 4px; }
-.tasklist__head--2 h3 { color: var(--color-text-secondary); }
+.tasklist__row:not(:first-child) .tasklist__head { padding-top: 8px; }
 .tasklist__head.is-danger h2, .tasklist__head.is-danger span { color: var(--color-text-danger); }
 /* Finalizadas: al final del grupo, atenuadas. */
 .tasklist__task.is-done .task__content { opacity: 0.6; }

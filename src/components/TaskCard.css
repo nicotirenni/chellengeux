@@ -1,13 +1,10 @@
 .task { position: relative; }
 
-.task__clip {
-  position: relative; overflow: hidden; border-radius: var(--radius-md);
-  touch-action: pan-y;
-}
+.task__clip { position: relative; touch-action: pan-y; }
 
 .task__action {
-  position: absolute; top: 0; right: 0; bottom: 0;
-  background: var(--color-bg-danger);
+  position: absolute; top: 0; right: 0; bottom: 0; overflow: hidden;
+  background: var(--color-bg-danger); border-radius: var(--radius-md);
   display: flex; justify-content: flex-end;
 }
 .task__delete {
@@ -23,7 +20,7 @@
   padding: var(--spacing-sm) var(--spacing-md);
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-default); border-radius: var(--radius-md);
-  cursor: pointer; user-select: none; -webkit-user-select: none;
+  cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: pan-y; will-change: transform;
   -webkit-tap-highlight-color: transparent;
 }
 .task__content:focus-visible { outline: 2px solid var(--color-border-accent); outline-offset: 2px; }

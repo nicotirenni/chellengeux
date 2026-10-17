@@ -18,7 +18,7 @@ type Props = {
   /** Abre el selector de estado. Sin esto, el estado no se puede tocar. */
   onStatus?: (id: string) => void;
   onEdit?: (id: string) => void;
-  /** En «Vencidas» de otro día y en «Más adelante» se muestra la fecha: `26 OCT · 13:00 hs`. */
+  /** Vencidas y días que no son el del evento muestran la fecha: `16 OCT · 12:20 hs`. */
   showDate?: boolean;
 };
 
@@ -28,15 +28,16 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, 
   const dragged = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Ancho revelado de la acción eliminar. Como en el Figma, el contenido se achica y no se recorta.
+  // Cuánto se desplazó la tarjeta a la izquierda. Dos capas: Eliminar fijo detrás y el contenido encima,
+  // que se mueve completo con translateX (nada se achica ni se recorta).
   const reveal = useMotionValue(0);
   const base = useRef(0);
   const locked = useRef<'x' | 'y' | null>(null);
   // Arrastre: la acción sigue al dedo 1:1 (0 → 40 px, ícono 0 → 40 %); revelado: 40 → 96 px, ícono → 100 %.
   const iconOpacity = useTransform(reveal, [0, 40, REVEAL_PX], [0, 0.4, 1]);
-  // 12 px extra quedan debajo del borde redondeado del contenido.
+  // 12 px extra quedan debajo del borde redondeado del contenido; en reposo la capa roja no asoma.
   const layerWidth = useTransform(reveal, (w) => (w > 0 ? w + 12 : 0));
-  const contentWidth = useTransform(reveal, (w) => `calc(100% - ${w}px)`);
+  const x = useTransform(reveal, (w) => -w);
 
   const settle = (to: number) => animate(reveal, to, reduce ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' });
 
@@ -115,7 +116,7 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, 
           role="button"
           tabIndex={0}
           aria-label={label}
-          style={{ width: contentWidth }}
+          style={{ x }}
           onPanStart={canEdit ? handlePanStart : undefined}
           onPan={canEdit ? handlePan : undefined}
           onPanEnd={canEdit ? handlePanEnd : undefined}
