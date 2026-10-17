@@ -77,8 +77,8 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const seedActivity = (): Activity[] => {
   const now = Date.now();
   return [
-    { id: 1, kind: 'received', people: ['Martín'], text: 'Martín pasó «Definir DJ» a En progreso', event: 'Casamiento Ocampo', at: now - 48 * 60_000 },
-    { id: 2, kind: 'received', people: ['Pablo'], text: 'Pablo finalizó «Confirmar catering»', event: 'Casamiento Ocampo', at: now - 3 * 3600_000 },
+    { id: 1, kind: 'received', people: ['Martín'], text: 'Martín pasó «Definir DJ» a En progreso', event: 'Matías y Sofía Ocampo', at: now - 48 * 60_000 },
+    { id: 2, kind: 'received', people: ['Pablo'], text: 'Pablo finalizó «Confirmar catering»', event: 'Matías y Sofía Ocampo', at: now - 3 * 3600_000 },
   ];
 };
 
@@ -140,7 +140,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         await request();
         setTasks((ts) => ts.filter((t) => t.id !== taskId));
         unhide(taskId);
-        notify([task.assignee], `${ME} eliminó «${task.title}»`, ev?.shortName);
+        notify([task.assignee], `${ME} eliminó «${task.title}»`, ev?.name);
         if (opts.confirmOnSuccess) show({ kind: 'confirm', message: `“${task.title}” eliminada`, duration: CONFIRM_MS });
       } catch {
         unhide(taskId);
@@ -183,7 +183,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       // Guardar resuelve el conflicto: la versión de Carla queda como la última.
       const next: Task = { ...task, ...patch, remoteEdit: undefined };
       setTasks((ts) => ts.map((t) => (t.id === id ? next : t)));
-      const ev = eventsRef.current.find((e) => e.id === task.eventId)?.shortName;
+      const ev = eventsRef.current.find((e) => e.id === task.eventId)?.name;
       const changes: string[] = [];
       if (next.date !== task.date) changes.push(`al ${next.date}`);
       if (next.time !== task.time) changes.push(`a las ${next.time}`);
@@ -211,7 +211,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       }
       const task: Task = { ...t, id: `n${seq++}`, status: 'pendiente' };
       setTasks((ts) => [...ts, task]);
-      notify([task.assignee], `${ME} le asignó «${task.title}»`, eventsRef.current.find((e) => e.id === t.eventId)?.shortName);
+      notify([task.assignee], `${ME} le asignó «${task.title}»`, eventsRef.current.find((e) => e.id === t.eventId)?.name);
       show({ kind: 'confirm', message: `“${task.title}” creada`, duration: CONFIRM_MS });
       return true;
     },
@@ -226,9 +226,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         show({ kind: 'error', message: 'No se pudo crear el evento' });
         return null;
       }
-      const ev: EventItem = { id: `e${seq++}`, type: e.type, name: e.name, shortName: e.name, date: `${e.date} ${e.iso.slice(0, 4)}`, iso: e.iso, people: e.people };
+      const ev: EventItem = { id: `e${seq++}`, type: e.type, name: e.name, date: `${e.date} ${e.iso.slice(0, 4)}`, iso: e.iso, people: e.people };
       setEvents((es) => [...es, ev].sort((a, b) => a.iso.localeCompare(b.iso)));
-      notify(e.people, `${ME} te sumó a «${ev.name}»`, ev.shortName);
+      notify(e.people, `${ME} te sumó a «${ev.name}»`, ev.name);
       show({ kind: 'confirm', message: `“${ev.name}” creado`, duration: CONFIRM_MS });
       return ev.id;
     },
@@ -248,7 +248,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const next: EventItem = {
         ...ev, type: patch.type, name: patch.name, iso: patch.iso,
         date: `${patch.date} ${patch.iso.slice(0, 4)}`,
-        shortName: patch.name === ev.name ? ev.shortName : patch.name,
       };
       setEvents((es) => es.map((e) => (e.id === id ? next : e)).sort((a, b) => a.iso.localeCompare(b.iso)));
       const days = Math.round((Date.parse(patch.iso) - Date.parse(ev.iso)) / 86_400_000);
@@ -256,8 +255,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setTasks((ts) => ts.map((t) => (t.eventId === id ? { ...t, date: shiftDate(t.date, days) } : t)));
       notify(
         ev.people,
-        next.date !== ev.date ? `${ME} pasó «${next.shortName}» al ${patch.date}` : `${ME} editó «${next.shortName}»`,
-        next.shortName,
+        next.date !== ev.date ? `${ME} pasó «${next.name}» al ${patch.date}` : `${ME} editó «${next.name}»`,
+        next.name,
       );
       show({ kind: 'confirm', message: 'Cambios guardados', duration: CONFIRM_MS });
       return true;
@@ -276,7 +275,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return false;
       }
       setEvents((es) => es.map((e) => (e.id === eventId ? { ...e, people: [...new Set([...e.people, ...people])] } : e)));
-      notify(people, `${ME} te sumó a «${ev.shortName}»`, ev.shortName);
+      notify(people, `${ME} te sumó a «${ev.name}»`, ev.name);
       return true;
     },
     [notify, show],
@@ -287,7 +286,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const task = tasksRef.current.find((t) => t.id === id);
       if (!task || task.status === status) return;
       setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status } : t)));
-      notify([task.assignee], `${ME} pasó «${task.title}» a ${STATUS_LABEL[status]}`, eventsRef.current.find((e) => e.id === task.eventId)?.shortName);
+      notify([task.assignee], `${ME} pasó «${task.title}» a ${STATUS_LABEL[status]}`, eventsRef.current.find((e) => e.id === task.eventId)?.name);
       show({ kind: 'confirm', message: `“${task.title}” · ${STATUS_LABEL[status]}`, duration: CONFIRM_MS });
     },
     [notify, show],
@@ -307,7 +306,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         // La tarjeta del evento se achica y desaparece (250 ms); después entra el Snackbar.
         setEvents((es) => es.filter((e) => e.id !== id));
         const people = ev.people.length ? ev.people : [...new Set(all.map((t) => t.assignee))];
-        const sent = notify(people, `${ME} eliminó «${ev.shortName}»`);
+        const sent = notify(people, `${ME} eliminó «${ev.name}»`);
         await wait(300);
         show({
           kind: 'confirm',
@@ -332,7 +331,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!task || !remote) return;
     // El cambio de Martín ya está en el servidor: si Carla descarta, queda el de él.
     setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, time: remote.time, remoteEdit: undefined } : t)));
-    const ev = eventsRef.current.find((e) => e.id === task.eventId)?.shortName;
+    const ev = eventsRef.current.find((e) => e.id === task.eventId)?.name;
     setActivity((a) => [
       { id: seq++, kind: 'received' as const, people: [remote.by], text: `${remote.by} cambió «${task.title}» a las ${remote.time}`, event: ev, at: Date.now() - remote.minutesAgo * 60_000 },
       ...a,

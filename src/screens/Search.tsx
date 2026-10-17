@@ -11,7 +11,7 @@ export function Search() {
   const { push } = useNav();
   const [q, setQ] = useState('');
   const term = norm(q.trim());
-  const evs = term ? events.filter((e) => norm(`${e.name} ${e.shortName} ${e.type}`).includes(term)) : [];
+  const evs = term ? events.filter((e) => norm(`${e.name} ${e.type}`).includes(term)) : [];
   const ts = term ? tasks.filter((t) => !hidden.includes(t.id) && norm(`${t.title} ${t.assignee}`).includes(term)) : [];
 
   return (
@@ -55,7 +55,7 @@ export function Search() {
                 <button type="button" className="row-card" onClick={() => push({ name: 'event', eventId: t.eventId, openTaskId: t.id })}>
                   <span className="row-card__main">
                     <span className="t-cuerpo-destacado row-card__title">{t.title}</span>
-                    <span className="t-leyenda muted">{events.find((e) => e.id === t.eventId)?.shortName} · {t.date} · {t.assignee || 'Sin asignar'}</span>
+                    <span className="t-leyenda muted">{events.find((e) => e.id === t.eventId)?.name} · {t.date} · {t.assignee || 'Sin asignar'}</span>
                   </span>
                   <StatusBadge status={t.status} />
                 </button>

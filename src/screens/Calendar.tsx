@@ -39,7 +39,7 @@ export function Calendar() {
                       <span className="t-cuerpo-destacado row-card__title">{t.title}</span>
                       <span className="row-card__meta">
                         <IconLabel danger={isOverdue(t)}>{t.time} hs</IconLabel>
-                        <span className="t-leyenda muted">{ev?.shortName} · {t.assignee || 'Sin asignar'}</span>
+                        <span className="t-leyenda muted">{ev?.name} · {t.assignee || 'Sin asignar'}</span>
                       </span>
                     </span>
                     <StatusBadge status={t.status} />

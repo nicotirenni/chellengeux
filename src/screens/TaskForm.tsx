@@ -110,7 +110,7 @@ export function TaskForm({ taskId }: { taskId?: string }) {
               aria-haspopup="dialog"
               onClick={() => setSheet('event')}
             >
-              {ev ? ev.shortName : 'Elegí un evento'}
+              {ev ? ev.name : 'Elegí un evento'}
             </button>
           </div>
         )}
@@ -198,7 +198,7 @@ export function TaskForm({ taskId }: { taskId?: string }) {
               }}
             >
               <span className="event-option__text">
-                <span className="event-option__name">{e.shortName}</span>
+                <span className="event-option__name">{e.name}</span>
                 <span className="event-option__meta">{e.type} · {e.date}</span>
               </span>
               {form.eventId === e.id && <span className="status-list__check" aria-hidden>✓</span>}

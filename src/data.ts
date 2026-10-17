@@ -19,7 +19,6 @@ export type EventItem = {
   id: string;
   type: string;
   name: string;
-  shortName: string;
   date: string;
   /** Fecha ISO, para "En 9 días". */
   iso: string;
@@ -56,15 +55,15 @@ export const STATUS_LABEL: Record<TaskStatus, string> = {
 
 export const seedEvents = (): EventItem[] => [
   {
-    id: 'ocampo', type: 'Casamiento', name: 'Matías y Sofía Ocampo', shortName: 'Casamiento Ocampo',
+    id: 'ocampo', type: 'Casamiento', name: 'Matías y Sofía Ocampo',
     date: '25 OCT 2026', iso: '2026-10-25', people: ['Martín', 'Sofía', 'Lucía', 'Pablo'],
   },
   {
-    id: 'juana', type: 'Cumpleaños', name: 'Cumple de Juana', shortName: 'Cumple de Juana',
+    id: 'juana', type: 'Cumpleaños', name: 'Cumple de Juana',
     date: '14 NOV 2026', iso: '2026-11-14', people: ['Lucía', 'Martín', 'Sofía'],
   },
   {
-    id: 'lola', type: 'Bautismo', name: 'Bautismo de Lola', shortName: 'Bautismo de Lola',
+    id: 'lola', type: 'Bautismo', name: 'Bautismo de Lola',
     date: '06 DIC 2026', iso: '2026-12-06', people: ['Sofía', 'Lucía'],
   },
 ];
@@ -77,7 +76,7 @@ const rows = (eventId: string, prefix: string, list: Row[]): Task[] =>
   }));
 
 /**
- * Casamiento Ocampo (25 OCT): 25 tareas, 9 pendientes · 4 en progreso · 12 finalizadas (Figma 84:384),
+ * Matías y Sofía Ocampo (25 OCT): 25 tareas, 9 pendientes · 4 en progreso · 12 finalizadas (Figma 84:384),
  * 12 de 25 hechas. Hoy es 16 OCT a las 14:00: «Revisar lista de invitados» (16 OCT · 12:20) es la única vencida (Figma 73:96).
  */
 export const seedTasks = (): Task[] => [

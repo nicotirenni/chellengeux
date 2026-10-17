@@ -16,7 +16,7 @@ const ctx = await browser.newContext({ viewport: { width: W, height: H }, device
 const page = await ctx.newPage();
 await page.goto(URL);
 await page.waitForLoadState('networkidle');
-// Como Carla: Mis eventos → Casamiento Ocampo.
+// Como Carla: Mis eventos → Matías y Sofía Ocampo.
 await page.getByRole('button', { name: /^Matías y Sofía Ocampo/ }).click();
 await page.waitForTimeout(600);
 

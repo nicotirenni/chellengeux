@@ -308,7 +308,7 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
               </div>
               <div>
                 <dt>Evento</dt>
-                <dd>{ev.shortName}</dd>
+                <dd>{ev.name}</dd>
               </div>
             </dl>
             <Button variant="secondary" icon="edit" onClick={() => edit(sheetTask.id)}>Editar</Button>
@@ -343,7 +343,7 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
       </Drawer>
 
       {/* F3 · 2. Opciones del evento */}
-      <Drawer open={sheet?.kind === 'options'} onClose={close} title={ev.shortName}>
+      <Drawer open={sheet?.kind === 'options'} onClose={close} title={ev.name} description={`${ev.type} · ${ev.date}`}>
         <div className="options" role="menu">
           <button type="button" role="menuitem" className="options__item t-cuerpo" onClick={() => { close(); push({ name: 'editEvent', eventId }); }}>
             <Icon name="edit" />Editar evento
