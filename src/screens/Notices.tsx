@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Avatar } from '../components/base';
+import { Arrived, SkGroup, SkRow, useFetch } from '../components/Skeleton';
 import { sentTitle, useStore, type Activity } from '../store';
 import './Tabs.css';
 
@@ -17,6 +18,7 @@ export function Notices({ active }: { active: boolean }) {
   const { activity, unread, markRead } = useStore();
   const reduce = useReducedMotion();
   const [now, setNow] = useState(Date.now);
+  const { loading, arrived } = useFetch('notices', 600);
 
   // Mirar la pestaña marca todo como leído.
   useEffect(() => {
@@ -32,9 +34,12 @@ export function Notices({ active }: { active: boolean }) {
     <div className="tab-screen">
       <h1 className="t-titulo tab-screen__title">Notificaciones</h1>
       <p className="t-leyenda tab-screen__lead">Lo que pasa en tus eventos y a quién le avisamos.</p>
-      {activity.length === 0 ? (
+      {loading ? (
+        <SkGroup><SkRow avatar /><SkRow avatar /><SkRow avatar /></SkGroup>
+      ) : activity.length === 0 ? (
         <p className="tab-screen__empty t-cuerpo">Todavía no hay notificaciones.</p>
       ) : (
+        <Arrived arrived={arrived}>
         <ul className="feed" aria-live="polite">
           <AnimatePresence initial={false}>
             {activity.map((a: Activity) => (
@@ -55,6 +60,7 @@ export function Notices({ active }: { active: boolean }) {
             ))}
           </AnimatePresence>
         </ul>
+        </Arrived>
       )}
     </div>
   );

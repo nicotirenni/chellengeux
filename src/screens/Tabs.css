@@ -33,3 +33,4 @@
 .search:focus-within { border: 2px solid var(--color-border-accent); padding: 0 13px; }
 .search input { all: unset; flex: 1; min-width: 0; color: var(--color-text-primary); }
 .search input::placeholder { color: var(--color-text-muted); }
+.tab-screen__list { display: flex; flex-direction: column; gap: 12px; }

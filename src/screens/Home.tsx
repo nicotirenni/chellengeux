@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Icon } from '../components/base';
+import { Arrived, Sk, SkEventCard, SkFeatured, SkGroup, useFetch } from '../components/Skeleton';
 import { daysUntil, isOverdue, type EventItem } from '../data';
 import { useNav } from '../nav';
 import { useStore } from '../store';
@@ -19,6 +20,8 @@ export function Home() {
   const { events, tasks, hidden } = useStore();
   const { push } = useNav();
   const reduce = useReducedMotion();
+  // Al abrir la app, los eventos llegan de la API.
+  const { loading, arrived } = useFetch('home', 900);
 
   const stats = (ev: EventItem) => {
     // Mismos datos que la lista del evento: las que esperan el deshacer ya no cuentan.
@@ -50,6 +53,16 @@ export function Home() {
         </div>
       </header>
 
+      {loading ? (
+        <SkGroup className="home__content">
+          <Sk w={120} h={18} />
+          <SkFeatured />
+          <Sk w={110} h={18} style={{ marginTop: 4 }} />
+          <SkEventCard />
+          <SkEventCard />
+        </SkGroup>
+      ) : (
+      <Arrived arrived={arrived}>
       <div className="home__content">
         {events.length === 0 && (
           <div className="home__empty">
@@ -108,6 +121,8 @@ export function Home() {
           })}
         </AnimatePresence>
       </div>
+      </Arrived>
+      )}
     </div>
   );
 }

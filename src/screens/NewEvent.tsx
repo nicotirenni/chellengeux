@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useState } from 'react';
 import { Alert, Button } from '../components/base';
 import { PeoplePicker } from '../components/PeoplePicker';
+import { markLoaded } from '../components/Skeleton';
 import { EVENT_TYPES, upcomingDates } from '../data';
 import { TAB } from '../motion';
 import { useNav } from '../nav';
@@ -43,6 +44,7 @@ export function NewEvent() {
     const id = await createEvent({ type, name: name.trim(), date: d.label, iso: d.iso, people });
     setSaving(false);
     if (!id) return;
+    markLoaded(`event-${id}`);
     pop();
     push({ name: 'event', eventId: id });
   };

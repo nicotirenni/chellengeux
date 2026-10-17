@@ -3,6 +3,7 @@ import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar, Button, FilterChip, Icon, PriorityBadge, StatusBadge } from '../components/base';
 import { Drawer, DrawerActions } from '../components/Drawer';
 import { TaskCard } from '../components/TaskCard';
+import { Arrived, Sk, SkGroup, SkRow, SkTaskCard, useFetch } from '../components/Skeleton';
 import {
   ORGANIZER, STATUS_LABEL, byDue, isOverdue, listNames, sortKey, withWeekday,
   type EventItem, type Task, type TaskStatus,
@@ -128,6 +129,8 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
   const { push, pop, tab: goTab } = useNav();
   const home = () => goTab('home');
   const reduce = useReducedMotion();
+  // Las tareas del evento llegan de la API la primera vez que se abre.
+  const { loading, arrived } = useFetch(`event-${eventId}`, 700);
   const [tab, setTab] = useState<'tareas' | 'equipo'>('tareas');
   const [filter, setFilter] = useState<TaskStatus | 'todas'>('todas');
   const [revealed, setRevealed] = useState<string | null>(null);
@@ -242,8 +245,13 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
           ))}
         </div>
       </header>
-      {tab === 'tareas' && (
-        <div className="filters" role="toolbar" aria-label="Filtrar tareas">
+      {tab === 'tareas' && loading && (
+        <div className="sk-chips sk-group" aria-hidden>
+          <Sk w={72} h={30} r={999} /><Sk w={104} h={30} r={999} /><Sk w={110} h={30} r={999} /><Sk w={100} h={30} r={999} />
+        </div>
+      )}
+      {tab === 'tareas' && !loading && (
+        <div className={`filters ${arrived ? 'sk-arrived' : ''}`} role="toolbar" aria-label="Filtrar tareas">
           {FILTERS.map((f) => (
             <FilterChip key={f.id} active={filter === f.id} onClick={() => setFilter(f.id)}>
               {f.label} <span className="chip__count">{f.id === 'todas' ? all.length : count(f.id)}</span>
@@ -253,11 +261,23 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
       )}
       </div>
 
-      {tab === 'equipo' ? (
+      {loading ? (
+        <SkGroup className="tasklist">
+          {tab === 'tareas' ? (
+            <>
+              <div className="sk-row"><Sk w={90} h={18} /><Sk w={52} h={12} /></div>
+              <SkTaskCard /><SkTaskCard />
+              <div className="sk-row" style={{ paddingTop: 8 }}><Sk w={100} h={18} /><Sk w={52} h={12} /></div>
+              <SkTaskCard /><SkTaskCard />
+            </>
+          ) : (
+            <><SkRow avatar /><SkRow avatar /><SkRow avatar /></>
+          )}
+        </SkGroup>
+      ) : tab === 'equipo' ? (
         <Team ev={ev} tasks={all} onAdd={() => push({ name: 'addPeople', eventId })} />
       ) : (
-        <>
-
+        <Arrived arrived={arrived}>
           <ul className="tasklist" aria-label="Tareas">
             <AnimatePresence mode="popLayout" initial={false}>
               {rows.map((r) => (
@@ -265,7 +285,7 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
               ))}
             </AnimatePresence>
           </ul>
-        </>
+        </Arrived>
       )}
 
       {/* F6 · 2. Detalle de la tarea */}

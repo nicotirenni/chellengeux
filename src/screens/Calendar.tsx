@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { IconLabel, StatusBadge } from '../components/base';
+import { Arrived, Sk, SkGroup, SkRow, useFetch } from '../components/Skeleton';
 import { isOverdue, sortKey } from '../data';
 import { useNav } from '../nav';
 import { useStore } from '../store';
@@ -9,6 +10,7 @@ import './Tabs.css';
 export function Calendar() {
   const { tasks, events, hidden } = useStore();
   const { push } = useNav();
+  const { loading, arrived } = useFetch('calendar', 600);
   // Primero lo que entra en pantalla; el resto cuando terminó el fundido de la pestaña.
   const [full, setFull] = useState(false);
   useEffect(() => {
@@ -25,6 +27,16 @@ export function Calendar() {
     <div className="tab-screen">
       <h1 className="t-titulo tab-screen__title">Calendario</h1>
       <p className="t-leyenda tab-screen__lead">Tareas sin terminar de todos tus eventos.</p>
+      {loading ? (
+        <SkGroup>
+          <Sk w={64} h={18} style={{ margin: '4px 4px 0' }} />
+          <SkRow /><SkRow /><SkRow />
+          <Sk w={64} h={18} style={{ margin: '4px 4px 0' }} />
+          <SkRow /><SkRow />
+        </SkGroup>
+      ) : (
+      <Arrived arrived={arrived}>
+      <div className="tab-screen__list">
       {days.length === 0 && <p className="tab-screen__empty t-cuerpo">No tenés tareas pendientes.</p>}
       {days.map((d) => (
         <section key={d} className="agenda">
@@ -50,6 +62,9 @@ export function Calendar() {
           </ul>
         </section>
       ))}
+      </div>
+      </Arrived>
+      )}
     </div>
   );
 }
