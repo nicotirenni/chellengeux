@@ -67,31 +67,39 @@ function AppShell() {
               exit={reduce ? { opacity: 0 } : { x: '100%' }}
               transition={reduce ? { duration: 0.15 } : SCREEN}
             >
-              <div className="app__scroll">
               {i === 0 ? (
-                <AnimatePresence mode="wait" initial={false}>
+                // Pestañas: la nueva se funde encima de la anterior, que queda visible hasta el final. Sin cuadro vacío.
+                <AnimatePresence initial={false}>
                   <motion.div
                     key={r.name}
-                    className="app__tab"
-                    initial={{ opacity: 0, y: reduce ? 0 : 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: reduce ? 0 : -4 }}
+                    className="app__scroll"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0.99, transition: { duration: TAB.duration, ease: 'linear' } }}
                     transition={TAB}
                   >
                     <Screen route={r} active={active} />
                   </motion.div>
                 </AnimatePresence>
               ) : (
-                <Screen route={r} active={active} />
+                <div className="app__scroll">
+                  <Screen route={r} active={active} />
+                </div>
               )}
-              </div>
-              <motion.div
-                className="app__dim"
-                aria-hidden
-                initial={false}
-                animate={{ opacity: covered && !reduce ? 1 : 0 }}
-                transition={SCREEN}
-              />
+              {/* Solo existe mientras la pantalla está tapada: no ocupa una capa de GPU de más. */}
+              <AnimatePresence>
+                {covered && !reduce && (
+                  <motion.div
+                    key="dim"
+                    className="app__dim"
+                    aria-hidden
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={SCREEN}
+                  />
+                )}
+              </AnimatePresence>
             </motion.div>
           );
         })}

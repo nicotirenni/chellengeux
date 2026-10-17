@@ -38,6 +38,8 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, 
   // 12 px extra quedan debajo del borde redondeado del contenido; en reposo la capa roja no asoma.
   const layerWidth = useTransform(reveal, (w) => (w > 0 ? w + 12 : 0));
   const x = useTransform(reveal, (w) => -w);
+  // Capa propia solo mientras se desliza: con una por tarjeta, los equipos con poca GPU parpadean.
+  const willChange = useTransform(reveal, (w) => (w > 0 ? 'transform' : 'auto'));
 
   const settle = (to: number) => animate(reveal, to, reduce ? { duration: 0 } : { duration: 0.2, ease: 'easeOut' });
 
@@ -116,7 +118,7 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, 
           role="button"
           tabIndex={0}
           aria-label={label}
-          style={{ x }}
+          style={{ x, willChange }}
           onPanStart={canEdit ? handlePanStart : undefined}
           onPan={canEdit ? handlePan : undefined}
           onPanEnd={canEdit ? handlePanEnd : undefined}

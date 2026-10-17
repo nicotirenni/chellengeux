@@ -23,7 +23,7 @@ h1, h2, h3, p { margin: 0; }
 .app__nav { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; }
 .app__overlay { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
 .app__overlay > * { pointer-events: auto; }
-.app__screen { overflow: visible; box-shadow: -12px 0 32px rgba(18, 10, 31, 0.10); will-change: transform; }
+/* Pocas capas y estables: solo las pantallas (2 o 3 a la vez) quedan promovidas a la GPU. */
+.app__screen { overflow: visible; will-change: transform; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .app__scroll { overflow-x: hidden; }
-.app__tab { min-height: 100%; }
 .app__dim { position: absolute; inset: 0; background: rgba(18, 10, 31, 0.16); pointer-events: none; z-index: 50; }

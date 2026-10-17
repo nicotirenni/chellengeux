@@ -36,9 +36,9 @@ export function Home() {
   // La tarjeta del evento eliminado se achica y desaparece (250 ms); lo de abajo sube en paralelo.
   const exit = reduce
     ? { opacity: 0, transition: { duration: 0.15 } }
-    : { opacity: 0, scale: 0.96, height: 0, marginTop: -16, transition: { duration: 0.25, ease: 'easeOut' } };
+    : { opacity: 0, height: 0, marginTop: -16, transition: { duration: 0.25, ease: 'easeOut' } };
   // Si el que se fue era el próximo evento, el siguiente entra recién cuando terminó el colapso.
-  const enter = { opacity: 1, scale: 1, height: 'auto', marginTop: 0, transition: { duration: 0.25, ease: 'easeOut', delay: reduce ? 0 : 0.25 } };
+  const enter = { opacity: 1, height: 'auto', marginTop: 0, transition: { duration: 0.25, ease: 'easeOut', delay: reduce ? 0 : 0.25 } };
 
   return (
     <div className="home">
@@ -64,7 +64,7 @@ export function Home() {
             <motion.div
               key={`next-${next.id}`}
               className="home__collapse"
-              initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.98, height: 0, marginTop: -16 }}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, height: 0, marginTop: -16 }}
               animate={enter}
               exit={exit}
             >
