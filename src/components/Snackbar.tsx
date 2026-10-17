@@ -80,6 +80,11 @@ function Snackbar({ snack, onAction, onExpire }: { snack: Snack; onAction: (s: S
             {snack.action}
           </button>
         )}
+        {isError && (
+          <button type="button" className="snack__close" aria-label="Cerrar aviso de error" onClick={() => onExpire(snack.id)}>
+            <Icon name="close-inverse" size={20} />
+          </button>
+        )}
       </div>
       {snack.kind === 'undo' && snack.duration && (
         <div className="snack__time" aria-hidden>

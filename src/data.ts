@@ -13,6 +13,8 @@ export type Task = {
   group: 'Hoy' | 'Más adelante';
   overdue?: boolean;
   priority?: Priority;
+  /** Un cambio que otra persona guardó mientras Carla tenía la tarea abierta (F6 · 3a). */
+  remoteEdit?: { by: string; time: string; minutesAgo: number };
 };
 
 export type EventItem = {
@@ -28,6 +30,7 @@ export type EventItem = {
 };
 
 export const ORGANIZER = 'Carla';
+export const EVENT_TYPES = ['Casamiento', 'Cumpleaños', 'Bautismo', 'Aniversario', 'Otro'];
 export const TEAM = ['Carla', 'Martín', 'Sofía', 'Lucía', 'Pablo'];
 /** Hoy en el prototipo: el Figma dice "En 9 días" para el 25 OCT. */
 export const TODAY = '2026-10-16';
@@ -65,7 +68,7 @@ const rows = (eventId: string, prefix: string, group: Task['group'], list: Row[]
 /** Casamiento Ocampo: 25 tareas, 9 pendientes · 4 en progreso · 12 finalizadas, como en el Figma (84:384). */
 export const seedTasks = (): Task[] => [
   ...rows('ocampo', 't', 'Hoy', [
-    ['Definir DJ', 'progreso', 'Martín', '25 OCT', '15:30'],
+    ['Definir DJ', 'progreso', 'Martín', '25 OCT', '15:30', { remoteEdit: { by: 'Martín', time: '16:00', minutesAgo: 2 } }],
     ['Revisar lista de invitados', 'pendiente', 'Carla', '25 OCT', '12:20', { overdue: true }],
     ['Comprar hielo', 'pendiente', 'Martín', '25 OCT', '18:00', { priority: 'Media' }],
     ['Confirmar catering', 'finalizado', 'Pablo', '25 OCT', '10:00'],
@@ -122,3 +125,19 @@ export const listNames = (names: string[]) =>
 
 export const daysUntil = (iso: string) =>
   Math.round((Date.parse(iso) - Date.parse(TODAY)) / 86_400_000);
+
+const MONTH_NUM: Record<string, number> = { ENE: 1, FEB: 2, MAR: 3, ABR: 4, MAY: 5, JUN: 6, JUL: 7, AGO: 8, SEP: 9, OCT: 10, NOV: 11, DIC: 12 };
+export const MONTH_NAME = Object.fromEntries(Object.entries(MONTH_NUM).map(([k, v]) => [v, k])) as Record<number, string>;
+
+/** "25 OCT" (+ "15:30") → número ordenable. */
+export const sortKey = (date: string, time = '00:00') => {
+  const [d, m] = date.split(' ');
+  return (MONTH_NUM[m] ?? 0) * 1e6 + Number(d) * 1e4 + Number(time.replace(':', ''));
+};
+
+/** Próximos días a partir de hoy, en formato "25 OCT". */
+export const upcomingDates = (n: number) =>
+  Array.from({ length: n }, (_, i) => {
+    const d = new Date(Date.parse(TODAY) + (i + 1) * 86_400_000);
+    return { label: `${String(d.getUTCDate()).padStart(2, '0')} ${MONTH_NAME[d.getUTCMonth() + 1]}`, iso: d.toISOString().slice(0, 10) };
+  });

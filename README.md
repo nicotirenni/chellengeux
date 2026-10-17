@@ -7,29 +7,24 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-## Estado
+## Qué hay
 
-- [x] **F9 · Eliminar tarea**: deslizar, revelar (24 px), eliminar sin tocar el botón pasada la mitad, menú ⋮,
-      Snackbar con barra de 5 s (se pausa con el dedo encima), Deshacer, error del DELETE con Reintentar
-      y aviso a Martín recién cuando vence el tiempo.
-- [x] **F6 · Editar tarea**: detalle en Drawer, edición (nombre, fecha y horario, responsable, prioridad),
-      `Cambios guardados`, aviso a Martín, conflicto "Martín cambió el horario hace 2 min" con Guardar igual / Revisar,
-      y `¿Descartar los cambios?` al cerrar.
-- [x] **F3 · Eliminar evento**: menú del evento, Drawer con resumen (tareas por estado y personas), mover tareas
-      a otro evento, Eliminar todo, Drawer Simple para un evento sin tareas y Snackbar de confirmación en Mis eventos.
-- Extra: Home · Mis eventos, selector de estado (tocar el badge), pestaña Equipo y vista como Martín (colaborador).
+App mobile a pantalla completa (en desktop, centrada con un máximo de 430 px). Todo pasa por interacciones de Carla;
+los cambios viven en memoria y recargar vuelve a los datos iniciales.
 
-## Controles de demo
-
-Panel al costado del teléfono (debajo, en el celular): reiniciar datos, forzar error del DELETE,
-lector de pantalla activo (deshacer en 10 s), simular conflicto de edición, ver como Martín,
-abrir un evento sin tareas, celular de Martín con los avisos y registro de eventos.
-
-`?evento=ocampo` abre directo el detalle del evento.
+- **Navegación:** Mis eventos → Evento → Tarea (Drawer), botón atrás y Bottom navigation:
+  Inicio · Calendario · Crear (Nueva tarea / Nuevo evento) · Avisos · Buscar.
+- **F9 · Eliminar tarea:** deslizar (24 px revela, pasada la mitad elimina) o menú ⋮, Snackbar con Deshacer (5 s).
+- **F6 · Editar tarea:** detalle → Editar → Guardar → `Cambios guardados`. «Definir DJ» tiene un cambio de Martín
+  de hace 2 min: al guardar aparece el conflicto (Guardar igual / Revisar). Cerrar con cambios pregunta `¿Descartar los cambios?`.
+- **F3 · Eliminar evento:** menú del evento → resumen → Mover tareas y eliminar / Eliminar todo. Sin tareas, Drawer Simple.
+- **Avisos:** actividad del equipo («Avisamos a Martín: Carla eliminó «Comprar hielo»»), con badge en la pestaña.
+  Una eliminación se registra recién cuando vence el deshacer; si Carla deshace, no se avisa a nadie.
+- **Errores:** si una operación falla de verdad (por ejemplo, sin conexión) aparece el Snackbar Error con Reintentar.
 
 ## Deploy
 
-Vercel lo detecta solo (Vite, `npm run build`, carpeta `dist`; ver `vercel.json`).
+Vercel lo detecta solo (Vite, `npm run build`, carpeta `dist`; ver `vercel.json`). Producción: https://chellengeux.vercel.app
 
 ## GIF
 

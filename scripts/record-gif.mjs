@@ -6,7 +6,7 @@ import { mkdtempSync, readdirSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const URL = process.env.URL ?? 'http://localhost:4173/?evento=ocampo';
+const URL = process.env.URL ?? 'http://localhost:4173/';
 const OUT = 'docs/f9-eliminar-tarea.gif';
 const W = 375, H = 812;
 const videoDir = mkdtempSync(join(tmpdir(), 'f9-'));
@@ -16,6 +16,9 @@ const ctx = await browser.newContext({ viewport: { width: W, height: H }, device
 const page = await ctx.newPage();
 await page.goto(URL);
 await page.waitForLoadState('networkidle');
+// Como Carla: Mis eventos → Casamiento Ocampo.
+await page.getByRole('button', { name: /^Matías y Sofía Ocampo/ }).click();
+await page.waitForTimeout(600);
 
 // Indicador de dedo, solo para el GIF.
 await page.addStyleTag({ content: `#finger{position:fixed;z-index:999;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:rgba(26,23,32,.28);border:2px solid rgba(255,255,255,.9);pointer-events:none;opacity:0;transition:opacity .12s,transform .12s}#finger.on{opacity:1;transform:scale(.85)}` });
@@ -27,7 +30,7 @@ await page.evaluate(() => {
 });
 
 const wait = (ms) => page.waitForTimeout(ms);
-const card = page.getByRole('button', { name: /^Comprar hielo/ });
+const card = page.locator('.app__screen:not([aria-hidden="true"])').getByRole('button', { name: /^Comprar hielo/ });
 const box = await card.boundingBox();
 const y = box.y + box.height / 2;
 const startX = box.x + box.width - 40;

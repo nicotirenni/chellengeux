@@ -16,7 +16,7 @@ function Progress({ done, total }: { done: number; total: number }) {
 }
 
 export function Home() {
-  const { events, tasks, me } = useStore();
+  const { events, tasks } = useStore();
   const { push } = useNav();
   const reduce = useReducedMotion();
 
@@ -39,15 +39,10 @@ export function Home() {
 
   return (
     <div className="home">
-      <div className="statusbar-home t-cuerpo-destacado">9:41</div>
       <header className="home__header">
-        {me === 'Carla' ? (
-          <img className="home__avatar" src="img/carla.jpg" alt="" width={40} height={40} />
-        ) : (
-          <span className="home__avatar home__avatar--initial t-subtitulo" aria-hidden>{me[0]}</span>
-        )}
+        <img className="home__avatar" src="img/carla.jpg" alt="" width={40} height={40} />
         <div>
-          <p className="t-cuerpo home__hello">Hola, {me}</p>
+          <p className="t-cuerpo home__hello">Hola, Carla</p>
           <h1 className="t-titulo">Mis eventos</h1>
         </div>
       </header>

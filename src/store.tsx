@@ -1,5 +1,8 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
-import { ORGANIZER, STATUS_LABEL, seedEvents, seedTasks, type EventItem, type Task, type TaskStatus } from './data';
+import {
+  ORGANIZER, STATUS_LABEL, listNames, seedEvents, seedTasks,
+  type EventItem, type Priority, type Task, type TaskStatus,
+} from './data';
 
 export type SnackKind = 'undo' | 'confirm' | 'error';
 
@@ -14,66 +17,73 @@ export type Snack = {
   onRetry?: () => void;
 };
 
-export type Notice = {
+/** Actividad del equipo (pestaña Avisos). */
+export type Activity = {
   id: number;
-  to: string;
-  title: string;
-  body: string;
-  at: Date;
+  /** sent: avisamos a alguien del equipo · received: alguien del equipo hizo un cambio. */
+  kind: 'sent' | 'received';
+  people: string[];
+  text: string;
+  event?: string;
+  at: number;
 };
 
-export type LogEntry = { id: number; at: Date; text: string; tone?: 'ok' | 'warn' | 'muted' };
-
-export type Role = 'Carla' | 'Martín';
-type Demo = { failDelete: boolean; screenReader: boolean; conflict: boolean; role: Role };
-
 export type TaskPatch = Partial<Pick<Task, 'title' | 'date' | 'time' | 'assignee' | 'priority'>>;
+export type NewTask = { eventId: string; title: string; date: string; time: string; assignee: string; priority?: Priority };
+export type NewEvent = { type: string; name: string; date: string; iso: string };
 export type MovePlan = { to: string; taskIds: string[] };
 
 type Store = {
   events: EventItem[];
   tasks: Task[];
   hidden: string[];
-  /** Eventos que se están eliminando en el servidor. */
-  deleting: string[];
   snack: Snack | null;
-  notices: Notice[];
-  log: LogEntry[];
-  demo: Demo;
-  me: Role;
-  setDemo: (patch: Partial<Demo>) => void;
+  activity: Activity[];
+  unread: number;
+  markRead: () => void;
   deleteTask: (id: string) => void;
   updateTask: (id: string, patch: TaskPatch) => Promise<boolean>;
+  createTask: (t: NewTask) => Promise<boolean>;
+  createEvent: (e: NewEvent) => Promise<string | null>;
   setStatus: (id: string, status: TaskStatus) => void;
   deleteEvent: (id: string, move?: MovePlan) => void;
-  emptyEvent: (id: string) => void;
   undo: () => void;
   expireSnack: (snackId: number) => void;
   snackAction: (snack: Snack) => void;
-  reset: () => void;
 };
 
 const Ctx = createContext<Store | null>(null);
 
+const ME = ORGANIZER;
 const CONFIRM_MS = 4000;
 const UNDO_MS = 5000;
-let seq = 1;
+let seq = 100;
 
-/** Servidor falso: 400 ms de latencia, falla si así lo pide el panel de demo. */
-const fakeRequest = (fail: boolean) =>
-  new Promise<void>((resolve, reject) => setTimeout(() => (fail ? reject(new Error('500')) : resolve()), 400));
+class RequestError extends Error {}
+
+/** Servidor en memoria: 400 ms de latencia. Falla de verdad si no hay conexión. */
+const request = () =>
+  new Promise<void>((resolve, reject) =>
+    setTimeout(() => (navigator.onLine === false ? reject(new RequestError('offline')) : resolve()), 400),
+  );
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const seedActivity = (): Activity[] => {
+  const now = Date.now();
+  return [
+    { id: 1, kind: 'received', people: ['Martín'], text: 'Martín pasó «Definir DJ» a En progreso', event: 'Casamiento Ocampo', at: now - 48 * 60_000 },
+    { id: 2, kind: 'received', people: ['Pablo'], text: 'Pablo finalizó «Confirmar catering»', event: 'Casamiento Ocampo', at: now - 3 * 3600_000 },
+  ];
+};
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState(seedEvents);
   const [tasks, setTasks] = useState(seedTasks);
   const [hidden, setHidden] = useState<string[]>([]);
-  const [deleting, setDeleting] = useState<string[]>([]);
   const [snack, setSnack] = useState<Snack | null>(null);
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [log, setLog] = useState<LogEntry[]>([]);
-  const [demo, setDemoState] = useState<Demo>({ failDelete: false, screenReader: false, conflict: false, role: 'Carla' });
+  const [activity, setActivity] = useState(seedActivity);
+  const [unread, setUnread] = useState(0);
 
   // Refs para leer el estado actual desde timers y promesas.
   const pending = useRef<{ taskId: string; snackId: number } | null>(null);
@@ -81,26 +91,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   tasksRef.current = tasks;
   const eventsRef = useRef(events);
   eventsRef.current = events;
-  const demoRef = useRef(demo);
-  demoRef.current = demo;
-  const epoch = useRef(0);
   const commitRef = useRef<(taskId: string, opts: { confirmOnSuccess: boolean }) => Promise<void>>();
 
-  const addLog = useCallback((text: string, tone?: LogEntry['tone']) => {
-    setLog((l) => [{ id: seq++, at: new Date(), text, tone }, ...l].slice(0, 40));
+  /** Registra en Avisos que avisamos a estas personas. Nunca a Carla misma. */
+  const notify = useCallback((to: string[], text: string, event?: string) => {
+    const people = to.filter((p, i) => p !== ME && to.indexOf(p) === i);
+    if (people.length === 0) return 0;
+    setActivity((a) => [{ id: seq++, kind: 'sent' as const, people, text, event, at: Date.now() }, ...a].slice(0, 50));
+    setUnread((n) => n + 1);
+    return people.length;
   }, []);
 
-  const notify = useCallback(
-    (to: string[], title: string, body: string) => {
-      const me = demoRef.current.role;
-      const list = to.filter((p, i) => p !== me && to.indexOf(p) === i);
-      if (list.length === 0) return 0;
-      setNotices((n) => [...list.map((p) => ({ id: seq++, to: p, title, body, at: new Date() })), ...n].slice(0, 30));
-      addLog(`Aviso enviado a ${list.join(', ')}`, 'ok');
-      return list.length;
-    },
-    [addLog],
-  );
+  const markRead = useCallback(() => setUnread(0), []);
 
   /** Si había una eliminación esperando, se confirma ya (un Snackbar nuevo reemplaza al anterior). */
   const flushPending = useCallback(() => {
@@ -129,20 +131,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const task = tasksRef.current.find((t) => t.id === taskId);
       if (!task) return;
       const ev = eventsRef.current.find((e) => e.id === task.eventId);
-      const myEpoch = epoch.current;
-      addLog(`DELETE /tareas/${task.id} («${task.title}»)…`, 'muted');
       try {
-        await fakeRequest(demoRef.current.failDelete);
-        if (myEpoch !== epoch.current) return;
+        await request();
         setTasks((ts) => ts.filter((t) => t.id !== taskId));
         unhide(taskId);
-        addLog(`DELETE OK · «${task.title}» eliminada`, 'ok');
-        notify([task.assignee], `${demoRef.current.role} eliminó una tarea`, `«${task.title}» ya no está en ${ev?.shortName ?? 'el evento'}.`);
+        notify([task.assignee], `${ME} eliminó «${task.title}»`, ev?.shortName);
         if (opts.confirmOnSuccess) show({ kind: 'confirm', message: `“${task.title}” eliminada`, duration: CONFIRM_MS });
       } catch {
-        if (myEpoch !== epoch.current) return;
         unhide(taskId);
-        addLog(`DELETE falló · «${task.title}» vuelve a la lista`, 'warn');
         show({
           kind: 'error', message: 'No se pudo eliminar', action: 'Reintentar',
           onRetry: () => {
@@ -152,7 +148,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         });
       }
     },
-    [addLog, notify, show],
+    [notify, show],
   );
   commitRef.current = commitDelete;
 
@@ -162,12 +158,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!task) return;
       flushPending();
       hide(id);
-      const duration = UNDO_MS * (demoRef.current.screenReader ? 2 : 1);
-      const snackId = show({ kind: 'undo', message: `“${task.title}” eliminada`, action: 'Deshacer', duration });
+      const snackId = show({ kind: 'undo', message: `“${task.title}” eliminada`, action: 'Deshacer', duration: UNDO_MS });
       pending.current = { taskId: id, snackId };
-      addLog(`«${task.title}» oculta · ${duration / 1000} s para deshacer`);
     },
-    [flushPending, show, addLog],
+    [flushPending, show],
   );
 
   /** PATCH de la tarea. Editar se confirma con Snackbar (sin deshacer) y avisa en el momento. */
@@ -175,29 +169,64 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     async (id: string, patch: TaskPatch) => {
       const task = tasksRef.current.find((t) => t.id === id);
       if (!task) return false;
-      const myEpoch = epoch.current;
-      addLog(`PATCH /tareas/${id} («${task.title}»)…`, 'muted');
-      await fakeRequest(false);
-      if (myEpoch !== epoch.current) return false;
-      const next = { ...task, ...patch };
+      try {
+        await request();
+      } catch {
+        show({ kind: 'error', message: 'No se pudieron guardar los cambios' });
+        return false;
+      }
+      // Guardar resuelve el conflicto: la versión de Carla queda como la última.
+      const next: Task = { ...task, ...patch, remoteEdit: undefined };
       setTasks((ts) => ts.map((t) => (t.id === id ? next : t)));
-      addLog(`PATCH OK · «${next.title}» guardada`, 'ok');
-      const me = demoRef.current.role;
+      const ev = eventsRef.current.find((e) => e.id === task.eventId)?.shortName;
       const changes: string[] = [];
-      if (patch.date !== undefined && patch.date !== task.date) changes.push(`el ${next.date}`);
-      if (patch.time !== undefined && patch.time !== task.time) changes.push(`a las ${next.time}`);
-      const body =
+      if (next.date !== task.date) changes.push(`al ${next.date}`);
+      if (next.time !== task.time) changes.push(`a las ${next.time}`);
+      const text =
         changes.length > 0
-          ? `«${next.title}» ahora es ${changes.join(' ')}.`
-          : patch.title !== undefined && patch.title !== task.title
-            ? `«${task.title}» ahora se llama «${next.title}».`
-            : `Cambió «${next.title}».`;
-      notify([next.assignee], `${me} editó una tarea`, body);
-      if (next.assignee !== task.assignee) notify([task.assignee], `${me} reasignó una tarea`, `«${next.title}» ahora la tiene ${next.assignee}.`);
+          ? `${ME} cambió «${next.title}» ${changes.join(' ')}`
+          : next.title !== task.title
+            ? `${ME} cambió el nombre de «${task.title}» a «${next.title}»`
+            : `${ME} editó «${next.title}»`;
+      notify([next.assignee], text, ev);
+      if (next.assignee !== task.assignee) notify([task.assignee], `${ME} pasó «${next.title}» a ${next.assignee}`, ev);
       show({ kind: 'confirm', message: 'Cambios guardados', duration: CONFIRM_MS });
       return true;
     },
-    [addLog, notify, show],
+    [notify, show],
+  );
+
+  const createTask = useCallback(
+    async (t: NewTask) => {
+      try {
+        await request();
+      } catch {
+        show({ kind: 'error', message: 'No se pudo crear la tarea' });
+        return false;
+      }
+      const task: Task = { ...t, id: `n${seq++}`, status: 'pendiente', group: 'Más adelante' };
+      setTasks((ts) => [...ts, task]);
+      notify([task.assignee], `${ME} le asignó «${task.title}»`, eventsRef.current.find((e) => e.id === t.eventId)?.shortName);
+      show({ kind: 'confirm', message: `“${task.title}” creada`, duration: CONFIRM_MS });
+      return true;
+    },
+    [notify, show],
+  );
+
+  const createEvent = useCallback(
+    async (e: NewEvent) => {
+      try {
+        await request();
+      } catch {
+        show({ kind: 'error', message: 'No se pudo crear el evento' });
+        return null;
+      }
+      const ev: EventItem = { id: `e${seq++}`, type: e.type, name: e.name, shortName: e.name, date: `${e.date} ${e.iso.slice(0, 4)}`, iso: e.iso, people: [] };
+      setEvents((es) => [...es, ev].sort((a, b) => a.iso.localeCompare(b.iso)));
+      show({ kind: 'confirm', message: `“${ev.name}” creado`, duration: CONFIRM_MS });
+      return ev.id;
+    },
+    [show],
   );
 
   const setStatus = useCallback(
@@ -205,13 +234,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const task = tasksRef.current.find((t) => t.id === id);
       if (!task || task.status === status) return;
       setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status, overdue: status === 'finalizado' ? false : t.overdue } : t)));
-      const me = demoRef.current.role;
-      addLog(`Estado de «${task.title}» → ${STATUS_LABEL[status]}`, 'ok');
-      // Avisa al responsable o, si cambia quien ayuda, a quien organiza.
-      notify([me === ORGANIZER ? task.assignee : ORGANIZER], `${me} cambió el estado de una tarea`, `«${task.title}» está ${STATUS_LABEL[status].toLowerCase()}.`);
+      notify([task.assignee], `${ME} pasó «${task.title}» a ${STATUS_LABEL[status]}`, eventsRef.current.find((e) => e.id === task.eventId)?.shortName);
       show({ kind: 'confirm', message: `“${task.title}” · ${STATUS_LABEL[status]}`, duration: CONFIRM_MS });
     },
-    [addLog, notify, show],
+    [notify, show],
   );
 
   /** Eliminar evento: no se puede deshacer, por eso se confirma antes con el Drawer. */
@@ -220,14 +246,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const ev = eventsRef.current.find((e) => e.id === id);
       if (!ev) return;
       const target = move && eventsRef.current.find((e) => e.id === move.to);
-      const myEpoch = epoch.current;
       flushPending();
       setSnack(null);
-      setDeleting((d) => [...d, id]);
-      addLog(`${move ? `MOVE ${move.taskIds.length} tareas → ${target?.shortName} · ` : ''}DELETE /eventos/${id}…`, 'muted');
       try {
-        await fakeRequest(demoRef.current.failDelete);
-        if (myEpoch !== epoch.current) return;
+        await request();
         const all = tasksRef.current.filter((t) => t.eventId === id);
         const moved = new Set(move?.taskIds ?? []);
         setTasks((ts) =>
@@ -235,62 +257,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
         // La tarjeta del evento se achica y desaparece (250 ms); después entra el Snackbar.
         setEvents((es) => es.filter((e) => e.id !== id));
-        setDeleting((d) => d.filter((x) => x !== id));
-        addLog(`DELETE OK · «${ev.shortName}» eliminado`, 'ok');
         const people = ev.people.length ? ev.people : [...new Set(all.map((t) => t.assignee))];
-        let sent = 0;
-        for (const p of people) {
-          const mine = all.filter((t) => t.assignee === p && moved.has(t.id));
-          sent += notify(
-            [p],
-            `${demoRef.current.role} eliminó un evento`,
-            mine.length && target
-              ? `«${ev.shortName}» ya no está. ${mine.length === 1 ? 'Tu tarea pasó' : 'Tus tareas pasaron'} a ${target.shortName}.`
-              : `«${ev.shortName}» ya no está en tus eventos.`,
-          );
-        }
+        const sent = notify(
+          people,
+          moved.size > 0 && target
+            ? `${ME} eliminó «${ev.shortName}» y pasó ${moved.size} ${moved.size === 1 ? 'tarea' : 'tareas'} a ${target.shortName}`
+            : `${ME} eliminó «${ev.shortName}»`,
+        );
         await wait(300);
-        if (myEpoch !== epoch.current) return;
         show({
           kind: 'confirm',
-          message: move && move.taskIds.length > 0
+          message: moved.size > 0
             ? 'Tareas movidas · Evento eliminado'
             : sent > 0 ? `Evento eliminado · ${sent} ${sent === 1 ? 'aviso enviado' : 'avisos enviados'}` : 'Evento eliminado',
           duration: CONFIRM_MS,
         });
       } catch {
-        if (myEpoch !== epoch.current) return;
-        setDeleting((d) => d.filter((x) => x !== id));
-        addLog(`DELETE falló · «${ev.shortName}» sigue en tus eventos`, 'warn');
         show({
           kind: 'error', message: 'No se pudo eliminar el evento', action: 'Reintentar',
           onRetry: () => void deleteEventRef.current?.(id, move),
         });
       }
     },
-    [addLog, flushPending, notify, show],
+    [flushPending, notify, show],
   );
   const deleteEventRef = useRef(deleteEvent);
   deleteEventRef.current = deleteEvent;
 
-  const emptyEvent = useCallback(
-    (id: string) => {
-      setTasks((ts) => ts.filter((t) => t.eventId !== id));
-      setEvents((es) => es.map((e) => (e.id === id ? { ...e, people: [] } : e)));
-      addLog(`Demo · «${eventsRef.current.find((e) => e.id === id)?.shortName}» quedó sin tareas ni equipo`, 'muted');
-    },
-    [addLog],
-  );
-
   const undo = useCallback(() => {
     const p = pending.current;
     if (!p) return;
+    // Deshacer: la tarea vuelve y no se avisa a nadie.
     pending.current = null;
     unhide(p.taskId);
     setSnack(null);
-    const task = tasksRef.current.find((t) => t.id === p.taskId);
-    addLog(`Deshacer · «${task?.title}» restaurada · no se envió ningún aviso`, 'ok');
-  }, [addLog]);
+  }, []);
 
   const expireSnack = useCallback(
     (snackId: number) => {
@@ -298,11 +299,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const p = pending.current;
       if (p && p.snackId === snackId) {
         pending.current = null;
-        addLog('Venció el tiempo para deshacer', 'muted');
         void commitDelete(p.taskId, { confirmOnSuccess: false });
       }
     },
-    [commitDelete, addLog],
+    [commitDelete],
   );
 
   const snackAction = useCallback(
@@ -310,38 +310,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (s.kind === 'undo') return undo();
       if (s.kind === 'error' && s.onRetry) {
         setSnack(null);
-        addLog('Reintentar', 'muted');
         s.onRetry();
       }
     },
-    [undo, addLog],
-  );
-
-  const reset = useCallback(() => {
-    epoch.current++;
-    pending.current = null;
-    setEvents(seedEvents());
-    setTasks(seedTasks());
-    setHidden([]);
-    setDeleting([]);
-    setSnack(null);
-    setNotices([]);
-    setLog([]);
-  }, []);
-
-  const setDemo = useCallback(
-    (patch: Partial<Demo>) => {
-      setDemoState((d) => ({ ...d, ...patch }));
-      if (patch.role) addLog(`Demo · ahora ves la app como ${patch.role}`, 'muted');
-    },
-    [addLog],
+    [undo],
   );
 
   return (
     <Ctx.Provider
       value={{
-        events, tasks, hidden, deleting, snack, notices, log, demo, me: demo.role, setDemo,
-        deleteTask, updateTask, setStatus, deleteEvent, emptyEvent, undo, expireSnack, snackAction, reset,
+        events, tasks, hidden, snack, activity, unread, markRead,
+        deleteTask, updateTask, createTask, createEvent, setStatus, deleteEvent, undo, expireSnack, snackAction,
       }}
     >
       {children}
@@ -354,3 +333,6 @@ export function useStore() {
   if (!s) throw new Error('useStore fuera de StoreProvider');
   return s;
 }
+
+/** "Avisamos a Martín, Sofía y Pablo". */
+export const sentTitle = (people: string[]) => `Avisamos a ${listNames(people)}`;

@@ -1,8 +1,7 @@
 .ev-header {
-  background: var(--color-bg-surface); padding-top: 8px;
+  background: var(--color-bg-surface); padding-top: 16px;
   display: flex; flex-direction: column; gap: 12px;
 }
-.statusbar { padding: 6px 24px 2px; color: var(--color-text-primary); }
 .ev-header__nav { display: flex; justify-content: space-between; padding: 0 16px; }
 .icon-btn { all: unset; cursor: pointer; display: flex; padding: 0; border-radius: var(--radius-sm); }
 .icon-btn:focus-visible { outline: 2px solid var(--color-border-accent); }

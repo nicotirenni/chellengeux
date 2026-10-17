@@ -24,14 +24,15 @@ type Sheet =
   | { kind: 'delete' }
   | null;
 
-export function EventScreen({ eventId, active }: { eventId: string; active: boolean }) {
-  const { events, tasks, hidden, me, deleteTask, setStatus, deleteEvent } = useStore();
-  const { push, pop, home } = useNav();
+export function EventScreen({ eventId, active, openTaskId }: { eventId: string; active: boolean; openTaskId?: string }) {
+  const { events, tasks, hidden, deleteTask, setStatus, deleteEvent } = useStore();
+  const { push, pop, tab: goTab } = useNav();
+  const home = () => goTab('home');
   const reduce = useReducedMotion();
   const [tab, setTab] = useState<'tareas' | 'equipo'>('tareas');
   const [filter, setFilter] = useState<TaskStatus | 'todas'>('todas');
   const [revealed, setRevealed] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<Sheet>(null);
+  const [sheet, setSheet] = useState<Sheet>(() => (openTaskId ? { kind: 'detail', taskId: openTaskId } : null));
   // Al volver de Editar, se reabre el detalle de la tarea con los datos nuevos.
   const reopen = useRef<string | null>(null);
 
@@ -53,7 +54,6 @@ export function EventScreen({ eventId, active }: { eventId: string; active: bool
 
   if (!ev) return null;
 
-  const canEdit = me === ORGANIZER;
   const all = tasks.filter((t) => t.eventId === eventId);
   const visible = all.filter((t) => !hidden.includes(t.id) && (filter === 'todas' || t.status === filter));
   const groups = (['Hoy', 'Más adelante'] as const)
@@ -61,7 +61,6 @@ export function EventScreen({ eventId, active }: { eventId: string; active: bool
     .filter((x, i) => i === 0 || x.list.length > 0);
   const sheetTask = sheet && 'taskId' in sheet ? tasks.find((t) => t.id === sheet.taskId) : undefined;
   const close = () => setSheet(null);
-  const canChangeStatus = (t: Task) => canEdit || t.assignee === me;
 
   const handleDelete = (id: string) => {
     setRevealed(null);
@@ -79,7 +78,6 @@ export function EventScreen({ eventId, active }: { eventId: string; active: bool
   return (
     <>
       <header className="ev-header">
-        <div className="statusbar t-etiqueta">9:41</div>
         <nav className="ev-header__nav">
           <button type="button" className="icon-btn" aria-label="Volver" onClick={pop}>
             <Icon name="back" />
@@ -89,7 +87,6 @@ export function EventScreen({ eventId, active }: { eventId: string; active: bool
             className="icon-btn"
             aria-label="Opciones del evento"
             aria-haspopup="dialog"
-            disabled={!canEdit}
             onClick={() => setSheet({ kind: 'options' })}
           >
             <Icon name="menu" />
@@ -154,13 +151,13 @@ export function EventScreen({ eventId, active }: { eventId: string; active: bool
                       >
                         <TaskCard
                           task={t}
-                          canEdit={canEdit}
+                          canEdit
                           revealed={revealed === t.id}
                           onReveal={setRevealed}
                           onDelete={handleDelete}
                           onOpen={(id) => setSheet({ kind: 'detail', taskId: id })}
-                          onStatus={canChangeStatus(t) ? (id) => setSheet({ kind: 'status', taskId: id }) : undefined}
-                          onEdit={canEdit ? edit : undefined}
+                          onStatus={(id) => setSheet({ kind: 'status', taskId: id })}
+                          onEdit={edit}
                         />
                       </motion.li>
                     ))}
@@ -183,7 +180,7 @@ export function EventScreen({ eventId, active }: { eventId: string; active: bool
             <div className="detail__top">
               <StatusBadge
                 status={sheetTask.status}
-                onClick={canChangeStatus(sheetTask) ? () => setSheet({ kind: 'status', taskId: sheetTask.id }) : undefined}
+                onClick={() => setSheet({ kind: 'status', taskId: sheetTask.id })}
               />
               <button type="button" className="icon-btn" aria-label="Cerrar" onClick={close} data-initial-focus>
                 <Icon name="close" />
@@ -216,11 +213,7 @@ export function EventScreen({ eventId, active }: { eventId: string; active: bool
                 <dd>{ev.shortName}</dd>
               </div>
             </dl>
-            {canEdit ? (
-              <Button variant="secondary" icon="edit" onClick={() => edit(sheetTask.id)}>Editar</Button>
-            ) : (
-              <p className="t-leyenda muted">Solo {ORGANIZER} puede editar o eliminar esta tarea.</p>
-            )}
+            <Button variant="secondary" icon="edit" onClick={() => edit(sheetTask.id)}>Editar</Button>
           </>
         )}
       </Drawer>

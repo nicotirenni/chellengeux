@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Avatar, Button, FilterChip, Icon } from '../components/base';
 import { Drawer, DrawerActions } from '../components/Drawer';
-import { DATES, TEAM, listNames, type Priority } from '../data';
+import { DATES, ORGANIZER, TEAM, listNames, type Priority } from '../data';
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import './Form.css';
@@ -11,71 +11,68 @@ const TIMES = Array.from({ length: 24 * 4 }, (_, i) => `${String(Math.floor(i / 
 
 const PRIORITIES: (Priority | undefined)[] = [undefined, 'Baja', 'Media', 'Alta'];
 
-/** La versión que guardó otra persona mientras la tarea estaba abierta: 15 min antes. */
-const theirTime = (t: string) => {
-  const [h, m] = t.split(':').map(Number);
-  const total = (h * 60 + m + 24 * 60 - 15) % (24 * 60);
-  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-};
-
-export function EditTask({ taskId }: { taskId: string }) {
-  const { tasks, me, demo, updateTask } = useStore();
+/** F6 · 3. Editar tarea. Sin taskId, crea una tarea nueva (desde el botón Crear). */
+export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: string }) {
+  const { tasks, events, updateTask, createTask } = useStore();
   const { pop } = useNav();
-  const task = tasks.find((t) => t.id === taskId);
-  const [form, setForm] = useState(() => ({
+  const task = taskId ? tasks.find((t) => t.id === taskId) : undefined;
+  const [initial] = useState(() => ({
+    eventId: task?.eventId ?? eventId ?? events[0]?.id ?? '',
     title: task?.title ?? '',
-    date: task?.date ?? '',
-    time: task?.time ?? '',
-    assignee: task?.assignee ?? '',
+    date: task?.date ?? DATES[0],
+    time: task?.time ?? '10:00',
+    assignee: task?.assignee ?? ORGANIZER,
     priority: task?.priority,
   }));
+  const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [sheet, setSheet] = useState<'discard' | 'conflict' | null>(null);
   const [reviewed, setReviewed] = useState<string | null>(null);
 
-  if (!task) return null;
+  if (taskId && !task) return null;
+  const creating = !task;
 
-  const author = task.assignee !== me ? task.assignee : 'Martín';
-  const dirty =
-    form.title.trim() !== task.title || form.date !== task.date || form.time !== task.time ||
-    form.assignee !== task.assignee || form.priority !== task.priority;
-  const valid = form.title.trim().length > 0;
-  const notified = [...new Set([form.assignee, task.assignee])].filter((p) => p !== me);
-  const dates = DATES.includes(task.date) ? DATES : [task.date, ...DATES];
-  const times = [...new Set([...TIMES, task.time, theirTime(task.time)])].sort();
+  const dirty = (Object.keys(initial) as (keyof typeof initial)[]).some((k) =>
+    k === 'title' ? form.title.trim() !== initial.title : form[k] !== initial[k],
+  );
+  const valid = form.title.trim().length > 0 && !!form.eventId;
+  const notified = [...new Set([form.assignee, task?.assignee ?? form.assignee])].filter((p) => p !== ORGANIZER);
+  const dates = DATES.includes(initial.date) ? DATES : [initial.date, ...DATES];
+  const remote = task?.remoteEdit;
+  const times = [...new Set([...TIMES, initial.time, ...(remote ? [remote.time] : [])])].sort();
 
   const save = async () => {
     setSheet(null);
     setSaving(true);
-    const ok = await updateTask(task.id, { ...form, title: form.title.trim() });
+    const { eventId: ev, ...fields } = { ...form, title: form.title.trim() };
+    const ok = task ? await updateTask(task.id, fields) : await createTask({ eventId: ev, ...fields });
     setSaving(false);
     if (ok) pop();
   };
 
   const onSave = () => {
     // 3a · Solo aparece si otra persona editó la tarea mientras estaba abierta.
-    if (demo.conflict && !reviewed) return setSheet('conflict');
+    if (remote && !reviewed) return setSheet('conflict');
     void save();
   };
 
   const onClose = () => (dirty ? setSheet('discard') : pop());
 
   const review = () => {
-    const theirs = theirTime(task.time);
-    setForm((f) => ({ ...f, time: theirs }));
-    setReviewed(theirs);
+    if (!remote) return;
+    setForm((f) => ({ ...f, time: remote.time }));
+    setReviewed(remote.time);
     setSheet(null);
   };
 
   return (
     <div className="form-screen">
-      <div className="statusbar t-etiqueta">9:41</div>
       <nav className="form-screen__nav">
         <button type="button" className="icon-btn" aria-label="Cerrar sin guardar" onClick={onClose}>
           <Icon name="close" />
         </button>
       </nav>
-      <h1 className="t-titulo form-screen__title">Editar tarea</h1>
+      <h1 className="t-titulo form-screen__title">{creating ? 'Nueva tarea' : 'Editar tarea'}</h1>
 
       <div className="form-screen__body">
         <label className="field">
@@ -84,11 +81,22 @@ export function EditTask({ taskId }: { taskId: string }) {
             className="field__input t-cuerpo"
             value={form.title}
             maxLength={60}
+            placeholder={creating ? 'Por ejemplo, Comprar hielo' : undefined}
+            autoFocus={creating}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            aria-invalid={!form.title.trim() || undefined}
+            aria-invalid={(!creating && !form.title.trim()) || undefined}
           />
-          {!form.title.trim() && <span className="field__error t-leyenda"><Icon name="alert" size={20} />Escribí un nombre</span>}
+          {!creating && !form.title.trim() && <span className="field__error t-leyenda"><Icon name="alert" size={20} />Escribí un nombre</span>}
         </label>
+
+        {creating && (
+          <label className="field">
+            <span className="field__label t-leyenda">Evento</span>
+            <select className="field__input t-cuerpo" value={form.eventId} onChange={(e) => setForm({ ...form, eventId: e.target.value })}>
+              {events.map((e) => <option key={e.id} value={e.id}>{e.shortName}</option>)}
+            </select>
+          </label>
+        )}
 
         <fieldset className="field">
           <legend className="field__label t-leyenda">Fecha y horario</legend>
@@ -101,9 +109,9 @@ export function EditTask({ taskId }: { taskId: string }) {
               {times.map((t) => <option key={t}>{t}</option>)}
             </select>
           </div>
-          {reviewed && (
+          {reviewed && remote && (
             <span className="field__hint t-leyenda">
-              {author} lo cambió a las {reviewed} hace 2 min. Revisalo y guardá de nuevo.
+              {remote.by} lo cambió a las {reviewed} hace {remote.minutesAgo} min. Revisalo y guardá de nuevo.
             </span>
           )}
         </fieldset>
@@ -135,7 +143,7 @@ export function EditTask({ taskId }: { taskId: string }) {
       </div>
 
       <div className="form-screen__footer">
-        <Button onClick={onSave} disabled={!dirty || !valid} loading={saving}>Guardar</Button>
+        <Button onClick={onSave} disabled={!dirty || !valid} loading={saving}>{creating ? 'Crear tarea' : 'Guardar'}</Button>
       </div>
 
       {/* 5 · Cerrar sin guardar */}
@@ -147,23 +155,25 @@ export function EditTask({ taskId }: { taskId: string }) {
       </Drawer>
 
       {/* 3a · Alguien la cambió antes */}
-      <Drawer
-        open={sheet === 'conflict'}
-        onClose={() => setSheet(null)}
-        alert
-        title={`${author} cambió el horario hace 2 min`}
-        description="Si guardás, tu versión reemplaza la suya."
-      >
-        <div className="summary t-leyenda">
-          <div className="conflict__row"><span className="muted">Su versión</span><span>{task.date} · {theirTime(task.time)}</span></div>
-          <div className="summary__divider" />
-          <div className="conflict__row"><span className="muted">Tu versión</span><strong>{form.date} · {form.time}</strong></div>
-        </div>
-        <DrawerActions>
-          <Button onClick={() => void save()}>Guardar igual</Button>
-          <Button variant="secondary" onClick={review} data-initial-focus>Revisar</Button>
-        </DrawerActions>
-      </Drawer>
+      {remote && task && (
+        <Drawer
+          open={sheet === 'conflict'}
+          onClose={() => setSheet(null)}
+          alert
+          title={`${remote.by} cambió el horario hace ${remote.minutesAgo} min`}
+          description="Si guardás, tu versión reemplaza la suya."
+        >
+          <div className="summary t-leyenda">
+            <div className="conflict__row"><span className="muted">Su versión</span><span>{task.date} · {remote.time}</span></div>
+            <div className="summary__divider" />
+            <div className="conflict__row"><span className="muted">Tu versión</span><strong>{form.date} · {form.time}</strong></div>
+          </div>
+          <DrawerActions>
+            <Button onClick={() => void save()}>Guardar igual</Button>
+            <Button variant="secondary" onClick={review} data-initial-focus>Revisar</Button>
+          </DrawerActions>
+        </Drawer>
+      )}
     </div>
   );
 }

@@ -5,7 +5,8 @@ import './base.css';
 export type IconName =
   | 'clock' | 'alert' | 'alert-inverse' | 'back' | 'menu' | 'more' | 'trash' | 'undo'
   | 'calendar-16' | 'users-16' | 'users-18' | 'nav-home' | 'nav-calendar' | 'nav-plus' | 'nav-bell' | 'nav-search'
-  | 'close' | 'edit' | 'move' | 'trash-danger';
+  | 'close' | 'edit' | 'move' | 'trash-danger'
+  | 'close-inverse' | 'nav-home-active' | 'nav-calendar-active' | 'nav-bell-active' | 'nav-search-active';
 
 /** Íconos exportados del Figma (frame 7:2). El color viene horneado en cada SVG. */
 export function Icon({ name, size = 24 }: { name: IconName; size?: number }) {

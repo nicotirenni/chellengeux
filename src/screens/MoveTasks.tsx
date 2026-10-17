@@ -8,7 +8,7 @@ import './Form.css';
 /** F3 · 3a. Mover tareas: elegí cuáles pasan a otro evento; las demás se eliminan con el evento. */
 export function MoveTasks({ eventId }: { eventId: string }) {
   const { events, tasks, deleteEvent } = useStore();
-  const { pop, home } = useNav();
+  const { pop, tab } = useNav();
   const ev = events.find((e) => e.id === eventId);
   const list = tasks.filter((t) => t.eventId === eventId);
   const targets = events.filter((e) => e.id !== eventId);
@@ -27,13 +27,12 @@ export function MoveTasks({ eventId }: { eventId: string }) {
   const allPicked = picked.size === list.length;
 
   const confirm = () => {
-    home();
+    tab('home');
     deleteEvent(eventId, { to, taskIds: [...picked] });
   };
 
   return (
     <div className="form-screen">
-      <div className="statusbar t-etiqueta">9:41</div>
       <nav className="form-screen__nav">
         <button type="button" className="icon-btn" aria-label="Volver" onClick={pop}>
           <Icon name="back" />

@@ -1,31 +1,31 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
+export type Tab = 'home' | 'calendar' | 'notices' | 'search';
+
 export type Route =
-  | { name: 'home' }
-  | { name: 'event'; eventId: string }
+  | { name: Tab }
+  | { name: 'event'; eventId: string; openTaskId?: string }
   | { name: 'edit'; taskId: string }
+  | { name: 'newTask'; eventId?: string }
+  | { name: 'newEvent' }
   | { name: 'move'; eventId: string };
 
 type Nav = {
   stack: Route[];
   push: (r: Route) => void;
   pop: () => void;
-  /** Vuelve a Inicio (por ejemplo, después de eliminar un evento). */
-  home: () => void;
+  /** Cambia de pestaña de la Bottom navigation (vuelve a la raíz de esa pestaña). */
+  tab: (t: Tab) => void;
 };
 
 const Ctx = createContext<Nav | null>(null);
 
 export function NavProvider({ children }: { children: ReactNode }) {
-  // ?evento=ocampo abre directo el detalle del evento (lo usa el script del GIF).
-  const [stack, setStack] = useState<Route[]>(() => {
-    const ev = new URLSearchParams(location.search).get('evento');
-    return ev ? [{ name: 'home' }, { name: 'event', eventId: ev }] : [{ name: 'home' }];
-  });
+  const [stack, setStack] = useState<Route[]>([{ name: 'home' }]);
   const push = useCallback((r: Route) => setStack((s) => [...s, r]), []);
   const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
-  const home = useCallback(() => setStack([{ name: 'home' }]), []);
-  const value = useMemo(() => ({ stack, push, pop, home }), [stack, push, pop, home]);
+  const tab = useCallback((t: Tab) => setStack([{ name: t }]), []);
+  const value = useMemo(() => ({ stack, push, pop, tab }), [stack, push, pop, tab]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

@@ -1,32 +1,24 @@
 *, *::before, *::after { box-sizing: border-box; }
-html, body, #root { margin: 0; min-height: 100%; }
+html, body, #root { margin: 0; height: 100%; }
 body {
   font-family: var(--font); color: var(--color-text-primary);
-  background: var(--gray-100);
-  -webkit-font-smoothing: antialiased;
+  background: var(--color-bg-canvas);
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }
 button { font: inherit; }
 h1, h2, h3, p { margin: 0; }
 
-.stage {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  gap: 40px; padding: 32px;
+/* La app ocupa toda la pantalla; en desktop, centrada con un ancho máximo de 430 px. */
+.app {
+  position: relative; width: 100%; max-width: 430px; height: 100vh; height: 100dvh;
+  margin: 0 auto; overflow: hidden; background: var(--color-bg-canvas);
 }
-
-.phone {
-  position: relative; flex-shrink: 0; width: 375px; height: 812px;
-  overflow: hidden; border-radius: 32px; background: var(--color-bg-canvas);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+.app__screen {
+  position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
+  background: var(--color-bg-canvas); padding-top: env(safe-area-inset-top);
 }
-.phone__scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
-.phone__scroll::-webkit-scrollbar { display: none; }
-
-/* En el celular, el prototipo ocupa toda la pantalla y el panel queda debajo. */
-@media (max-width: 520px) {
-  .stage { display: block; padding: 0; }
-  .phone { width: 100vw; height: 100dvh; border-radius: 0; box-shadow: none; }
-}
-.phone__scroll { background: var(--color-bg-canvas); }
-.phone__nav { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; }
-.phone__overlay { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
-.phone__overlay > * { pointer-events: auto; }
+.app__screen::-webkit-scrollbar { display: none; }
+.app__nav { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; }
+.app__overlay { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
+.app__overlay > * { pointer-events: auto; }
