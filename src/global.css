@@ -14,11 +14,16 @@ h1, h2, h3, p { margin: 0; }
   position: relative; width: 100%; max-width: 430px; height: 100vh; height: 100dvh;
   margin: 0 auto; overflow: hidden; background: var(--color-bg-canvas);
 }
-.app__screen {
+.app__screen { position: absolute; inset: 0; overflow: hidden; background: var(--color-bg-canvas); }
+.app__scroll {
   position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
-  background: var(--color-bg-canvas); padding-top: env(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top);
 }
-.app__screen::-webkit-scrollbar { display: none; }
+.app__scroll::-webkit-scrollbar { display: none; }
 .app__nav { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; }
 .app__overlay { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
 .app__overlay > * { pointer-events: auto; }
+.app__screen { overflow: visible; box-shadow: -12px 0 32px rgba(18, 10, 31, 0.10); will-change: transform; }
+.app__scroll { overflow-x: hidden; }
+.app__tab { min-height: 100%; }
+.app__dim { position: absolute; inset: 0; background: rgba(18, 10, 31, 0.16); pointer-events: none; z-index: 50; }

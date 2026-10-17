@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'framer-motion';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { DRAWER_IN, DRAWER_OUT } from '../motion';
 import './Drawer.css';
 
 type Props = {
@@ -18,7 +19,7 @@ type Props = {
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /**
- * Drawer del Figma (9:131): sube en 250 ms ease-out sobre un fondo al 50 %.
+ * Drawer del Figma (9:131): sube en 250 ms con una curva suave sobre un fondo al 50 %.
  * Se cierra tocando afuera, deslizando hacia abajo, con Escape o Cancelar. Ninguno ejecuta la acción.
  */
 export function Drawer({ open, onClose, title, description, alert, top, children }: Props) {
@@ -75,8 +76,8 @@ export function Drawer({ open, onClose, title, description, alert, top, children
           <motion.div
             className="drawer__scrim"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 0.25, ease: 'easeOut' } }}
-            exit={{ opacity: 0, transition: { duration: 0.2, ease: 'easeIn' } }}
+            animate={{ opacity: 1, transition: DRAWER_IN }}
+            exit={{ opacity: 0, transition: DRAWER_OUT }}
             onClick={onClose}
           />
           <motion.div
@@ -87,8 +88,8 @@ export function Drawer({ open, onClose, title, description, alert, top, children
             aria-labelledby={titleId}
             aria-describedby={description ? descId : undefined}
             initial={reduce ? { opacity: 0 } : { y: '100%' }}
-            animate={reduce ? { opacity: 1, transition: { duration: 0.15 } } : { y: 0, transition: { duration: 0.25, ease: 'easeOut' } }}
-            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { y: '100%', transition: { duration: 0.2, ease: 'easeIn' } }}
+            animate={reduce ? { opacity: 1, transition: { duration: 0.15 } } : { y: 0, transition: DRAWER_IN }}
+            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { y: '100%', transition: DRAWER_OUT }}
             drag={reduce ? false : 'y'}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 1 }}

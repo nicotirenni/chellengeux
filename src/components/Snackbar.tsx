@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useMotionValue, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 import type { Snack } from '../store';
+import { SNACK_IN, SNACK_OUT } from '../motion';
 import { Icon } from './base';
 import './Snackbar.css';
 
@@ -21,9 +22,9 @@ export function SnackbarHost({ snack, onAction, onExpire, raised }: Props) {
         {snack && (
           <motion.div
             key={snack.id}
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0, transition: { duration: 0.2, ease: 'easeOut', delay: 0.1 } }}
-            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { opacity: 0, y: 24, transition: { duration: 0.15, ease: 'easeIn' } }}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1, transition: SNACK_IN }}
+            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { opacity: 0, y: 24, scale: 0.98, transition: SNACK_OUT }}
           >
             <Snackbar snack={snack} onAction={onAction} onExpire={onExpire} />
           </motion.div>

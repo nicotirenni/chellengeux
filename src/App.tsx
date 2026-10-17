@@ -12,6 +12,7 @@ import { NewEvent } from './screens/NewEvent';
 import { Notices } from './screens/Notices';
 import { Search } from './screens/Search';
 import { TaskForm } from './screens/TaskForm';
+import { SCREEN, TAB } from './motion';
 import { StoreProvider, useStore } from './store';
 
 const TABS: Tab[] = ['home', 'calendar', 'notices', 'search'];
@@ -49,6 +50,8 @@ function AppShell() {
       <AnimatePresence initial={false}>
         {stack.map((r, i) => {
           const active = i === stack.length - 1;
+          // La pantalla de abajo se corre un poco y se oscurece: da profundidad sin cortar el movimiento.
+          const covered = !active;
           // Cambiar de pestaña no desliza: solo las pantallas que se apilan.
           const key = i === 0 ? 'root' : `${i}-${r.name}-${'eventId' in r ? r.eventId : ''}${'taskId' in r ? r.taskId : ''}`;
           return (
@@ -60,11 +63,35 @@ function AppShell() {
               {...({ inert: active ? undefined : '' } as object)}
               style={{ zIndex: i + 1 }}
               initial={i === 0 ? false : reduce ? { opacity: 0 } : { x: '100%' }}
-              animate={reduce ? { opacity: 1 } : { x: 0 }}
+              animate={reduce ? { opacity: 1 } : { x: covered ? '-24%' : 0 }}
               exit={reduce ? { opacity: 0 } : { x: '100%' }}
-              transition={{ duration: reduce ? 0.15 : 0.3, ease: [0.2, 0, 0, 1] }}
+              transition={reduce ? { duration: 0.15 } : SCREEN}
             >
-              <Screen key={i === 0 ? r.name : undefined} route={r} active={active} />
+              <div className="app__scroll">
+              {i === 0 ? (
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={r.name}
+                    className="app__tab"
+                    initial={{ opacity: 0, y: reduce ? 0 : 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: reduce ? 0 : -4 }}
+                    transition={TAB}
+                  >
+                    <Screen route={r} active={active} />
+                  </motion.div>
+                </AnimatePresence>
+              ) : (
+                <Screen route={r} active={active} />
+              )}
+              </div>
+              <motion.div
+                className="app__dim"
+                aria-hidden
+                initial={false}
+                animate={{ opacity: covered && !reduce ? 1 : 0 }}
+                transition={SCREEN}
+              />
             </motion.div>
           );
         })}
@@ -72,7 +99,14 @@ function AppShell() {
       <SnackbarHost snack={snack} onAction={snackAction} onExpire={expireSnack} raised={!withNav} />
       <AnimatePresence initial={false}>
         {withNav && (
-          <motion.div key="nav" className="app__nav" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+          <motion.div
+            key="nav"
+            className="app__nav"
+            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
+            transition={SCREEN}
+          >
             <BottomNav
               active={isTab(root) ? root.name : null}
               unread={unread}
