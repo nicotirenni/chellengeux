@@ -55,7 +55,7 @@ export function Search() {
                 <button type="button" className="row-card" onClick={() => push({ name: 'event', eventId: t.eventId, openTaskId: t.id })}>
                   <span className="row-card__main">
                     <span className="t-cuerpo-destacado row-card__title">{t.title}</span>
-                    <span className="t-leyenda muted">{events.find((e) => e.id === t.eventId)?.shortName} · {t.date} · {t.assignee}</span>
+                    <span className="t-leyenda muted">{events.find((e) => e.id === t.eventId)?.shortName} · {t.date} · {t.assignee || 'Sin asignar'}</span>
                   </span>
                   <StatusBadge status={t.status} />
                 </button>

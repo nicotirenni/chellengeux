@@ -28,7 +28,7 @@ function Screen({ route, active }: { route: Route; active: boolean }) {
     case 'search': return <Search />;
     case 'event': return <EventScreen eventId={route.eventId} openTaskId={route.openTaskId} active={active} />;
     case 'edit': return <TaskForm taskId={route.taskId} />;
-    case 'newTask': return <TaskForm eventId={route.eventId} />;
+    case 'newTask': return <TaskForm />;
     case 'newEvent': return <NewEvent />;
     case 'editEvent': return <EditEvent eventId={route.eventId} />;
     case 'addPeople': return <AddPeople eventId={route.eventId} />;
@@ -139,7 +139,7 @@ function AppShell() {
             type="button"
             role="menuitem"
             className="options__item t-cuerpo"
-            onClick={() => create({ name: 'newTask', eventId: top.name === 'event' ? top.eventId : undefined })}
+            onClick={() => create({ name: 'newTask' })}
           >
             <Icon name="edit" />Nueva tarea
           </button>

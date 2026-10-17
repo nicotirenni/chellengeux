@@ -30,10 +30,10 @@ export function Notices({ active }: { active: boolean }) {
 
   return (
     <div className="tab-screen">
-      <h1 className="t-titulo tab-screen__title">Avisos</h1>
+      <h1 className="t-titulo tab-screen__title">Notificaciones</h1>
       <p className="t-leyenda tab-screen__lead">Lo que pasa en tus eventos y a quién le avisamos.</p>
       {activity.length === 0 ? (
-        <p className="tab-screen__empty t-cuerpo">Todavía no hay avisos.</p>
+        <p className="tab-screen__empty t-cuerpo">Todavía no hay notificaciones.</p>
       ) : (
         <ul className="feed" aria-live="polite">
           <AnimatePresence initial={false}>

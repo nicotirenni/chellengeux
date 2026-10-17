@@ -100,7 +100,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   /** Registra en Avisos que avisamos a estas personas. Nunca a Carla misma. */
   const notify = useCallback((to: string[], text: string, event?: string) => {
-    const people = to.filter((p, i) => p !== ME && to.indexOf(p) === i);
+    const people = to.filter((p, i) => p && p !== ME && to.indexOf(p) === i);
     if (people.length === 0) return 0;
     setActivity((a) => [{ id: seq++, kind: 'sent' as const, people, text, event, at: Date.now() }, ...a].slice(0, 50));
     setUnread((n) => n + 1);
@@ -194,7 +194,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ? `${ME} cambió el nombre de «${task.title}» a «${next.title}»`
             : `${ME} editó «${next.title}»`;
       notify([next.assignee], text, ev);
-      if (next.assignee !== task.assignee) notify([task.assignee], `${ME} pasó «${next.title}» a ${next.assignee}`, ev);
+      if (next.assignee !== task.assignee) notify([task.assignee], next.assignee ? `${ME} pasó «${next.title}» a ${next.assignee}` : `${ME} dejó «${next.title}» sin asignar`, ev);
       show({ kind: 'confirm', message: 'Cambios guardados', duration: CONFIRM_MS });
       return true;
     },

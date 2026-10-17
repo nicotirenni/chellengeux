@@ -300,7 +300,7 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
               </div>
               <div>
                 <dt>Responsable</dt>
-                <dd><Avatar name={sheetTask.assignee} />{sheetTask.assignee}</dd>
+                <dd>{sheetTask.assignee ? <><Avatar name={sheetTask.assignee} />{sheetTask.assignee}</> : <span className="muted">Sin asignar</span>}</dd>
               </div>
               <div>
                 <dt>Prioridad</dt>

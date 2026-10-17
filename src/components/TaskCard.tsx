@@ -92,7 +92,7 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, 
 
   const overdue = isOverdue(task);
   const when = `${showDate ? `${task.date} · ` : ''}${task.time} hs`;
-  const label = `${task.title}, ${STATUS_LABEL[task.status]}, ${when}${overdue ? ' vencida' : ''}, ${task.assignee}`;
+  const label = `${task.title}, ${STATUS_LABEL[task.status]}, ${when}${overdue ? ' vencida' : ''}, ${task.assignee || 'Sin asignar'}`;
 
   return (
     <div className="task">
@@ -157,8 +157,14 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, 
           <p className={`task__title t-cuerpo-destacado ${task.status === 'finalizado' ? 'is-done' : ''}`}>{task.title}</p>
           <div className="task__meta">
             <IconLabel danger={overdue}>{when}</IconLabel>
-            <Avatar name={task.assignee} />
-            <span className="t-leyenda task__who">{task.assignee}</span>
+            {task.assignee ? (
+              <>
+                <Avatar name={task.assignee} />
+                <span className="t-leyenda task__who">{task.assignee}</span>
+              </>
+            ) : (
+              <span className="t-leyenda task__who muted">Sin asignar</span>
+            )}
           </div>
         </motion.div>
       </div>

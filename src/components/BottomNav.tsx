@@ -6,19 +6,19 @@ import './BottomNav.css';
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'home', label: 'Inicio', icon: 'nav-home' },
   { id: 'calendar', label: 'Calendario', icon: 'nav-calendar' },
-  { id: 'notices', label: 'Avisos', icon: 'nav-bell' },
+  { id: 'notices', label: 'Notificaciones', icon: 'nav-bell' },
   { id: 'search', label: 'Buscar', icon: 'nav-search' },
 ];
 
 type Props = { active: Tab | null; unread: number; onTab: (t: Tab) => void; onCreate: () => void };
 
-/** Bottom navigation (100:2487): Inicio · Calendario · Crear · Avisos · Buscar. */
+/** Bottom navigation (100:2487): Inicio · Calendario · Crear · Notificaciones · Buscar. */
 export function BottomNav({ active, unread, onTab, onCreate }: Props) {
   const item = (t: (typeof TABS)[number]) => (
     <button
       key={t.id}
       type="button"
-      aria-label={t.id === 'notices' && unread > 0 ? `${t.label}, ${unread} ${unread === 1 ? 'nuevo' : 'nuevos'}` : t.label}
+      aria-label={t.id === 'notices' && unread > 0 ? `${t.label}, ${unread} ${unread === 1 ? 'nueva' : 'nuevas'}` : t.label}
       aria-current={active === t.id ? 'page' : undefined}
       onClick={() => onTab(t.id)}
       className="bottomnav__item"

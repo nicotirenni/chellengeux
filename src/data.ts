@@ -6,6 +6,7 @@ export type Task = {
   eventId: string;
   title: string;
   status: TaskStatus;
+  /** Vacío = sin asignar: nadie recibe avisos de esta tarea. */
   assignee: string;
   date: string;
   time: string;
