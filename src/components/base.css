@@ -1,0 +1,26 @@
+.icon { display: block; flex-shrink: 0; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+.badge--neutral { background: var(--color-bg-subtle); color: var(--color-text-secondary); }
+.badge--acento { background: var(--color-bg-accent-subtle); color: var(--color-text-accent); }
+.badge--exito { background: var(--color-bg-success-subtle); color: var(--color-text-success); }
+
+.chip {
+  flex-shrink: 0; padding: 6px 14px; border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-default); background: none;
+  color: var(--color-text-secondary); white-space: nowrap; cursor: pointer;
+}
+.chip--active { background: var(--color-bg-accent-subtle); border-color: transparent; color: var(--color-text-accent); }
+
+.avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: var(--radius-full);
+  background: var(--color-bg-accent-subtle); color: var(--color-text-accent);
+}
+
+.icon-label { display: inline-flex; align-items: center; gap: 4px; color: var(--color-text-secondary); white-space: nowrap; }
+.icon-label--danger { color: var(--color-text-danger); }

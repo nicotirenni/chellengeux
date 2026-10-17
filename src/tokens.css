@@ -1,0 +1,60 @@
+/* Tokens del Figma (sección 4 del spec). */
+:root {
+  /* primitivos */
+  --orange-50: #fff1eb; --orange-100: #ffd9c7; --orange-300: #ff8a57; --orange-500: #fe5000; --orange-700: #b83a00;
+  --violet-50: #f3edfb; --violet-100: #e2d4f5; --violet-300: #9c74d6; --violet-500: #5a1e9e; --violet-700: #43137a;
+  --gray-0: #ffffff; --gray-50: #f7f6f9; --gray-100: #eeecf2; --gray-200: #dddae4; --gray-400: #8e889a;
+  --gray-600: #5e596a; --gray-800: #2e2a37; --gray-900: #1a1720;
+  --red-50: #fdecec; --red-300: #ff8a80; --red-600: #c62828;
+  --green-50: #e8f5ec; --green-600: #1e7b3c;
+  --amber-50: #fff5e0; --amber-700: #8a5a00;
+
+  /* semánticos */
+  --color-bg-canvas: var(--gray-50);
+  --color-bg-surface: var(--gray-0);
+  --color-bg-subtle: var(--gray-100);
+  --color-bg-brand: var(--orange-500);
+  --color-bg-brand-subtle: var(--orange-50);
+  --color-bg-accent: var(--violet-500);
+  --color-bg-accent-subtle: var(--violet-50);
+  --color-bg-danger: var(--red-600);
+  --color-bg-danger-subtle: var(--red-50);
+  --color-bg-success-subtle: var(--green-50);
+  --color-bg-warning-subtle: var(--amber-50);
+  --color-bg-inverse: var(--gray-900);
+  --color-bg-disabled: var(--gray-100);
+  --color-text-primary: var(--gray-900);
+  --color-text-secondary: var(--gray-600);
+  --color-text-muted: var(--gray-400);
+  --color-text-on-accent: var(--gray-0);
+  --color-text-inverse: var(--gray-0);
+  --color-text-brand: var(--orange-700);
+  --color-text-accent: var(--violet-500);
+  --color-text-danger: var(--red-600);
+  --color-text-success: var(--green-600);
+  --color-text-warning: var(--amber-700);
+  --color-text-brand-on-inverse: var(--orange-300);
+  --color-text-disabled: var(--gray-400);
+  --color-icon-brand: var(--orange-500);
+  --color-icon-danger-on-inverse: var(--red-300);
+  --color-border-default: var(--gray-200);
+  --color-border-strong: var(--gray-400);
+  --color-border-accent: var(--violet-500);
+  --color-border-danger: var(--red-600);
+  --color-border-disabled: var(--gray-200);
+
+  --spacing-2xs: 4px; --spacing-xs: 8px; --spacing-sm: 12px; --spacing-md: 16px;
+  --spacing-lg: 20px; --spacing-xl: 24px; --spacing-2xl: 32px;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 24px; --radius-full: 999px;
+
+  --font: 'Nunito', system-ui, sans-serif;
+}
+
+/* tipografía */
+.t-titulo { font: 800 26px/32px var(--font); }
+.t-encabezado { font: 700 20px/26px var(--font); }
+.t-subtitulo { font: 700 16px/22px var(--font); }
+.t-cuerpo { font: 400 15px/22px var(--font); }
+.t-cuerpo-destacado { font: 600 15px/22px var(--font); }
+.t-leyenda { font: 400 13px/18px var(--font); }
+.t-etiqueta { font: 700 12px/16px var(--font); }

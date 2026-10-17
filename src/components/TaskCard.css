@@ -1,0 +1,59 @@
+.task { position: relative; }
+
+.task__clip {
+  position: relative; overflow: hidden; border-radius: var(--radius-md);
+  touch-action: pan-y;
+}
+
+.task__action {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  background: var(--color-bg-danger);
+  display: flex; justify-content: flex-end;
+}
+.task__delete {
+  all: unset; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-on-accent); overflow: hidden;
+}
+.task__delete-inner { display: flex; flex-direction: column; align-items: center; gap: 4px; white-space: nowrap; }
+.task__delete:focus-visible { outline: 2px solid var(--gray-0); outline-offset: -4px; }
+
+.task__content {
+  position: relative; display: flex; flex-direction: column; gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-md);
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.task__content:focus-visible { outline: 2px solid var(--color-border-accent); outline-offset: 2px; }
+
+.task__top { display: flex; align-items: center; justify-content: space-between; }
+.task__menu {
+  all: unset; cursor: pointer; border-radius: var(--radius-full);
+  margin: -8px -8px -8px 0; padding: 8px; display: flex;
+}
+.task__menu:disabled { opacity: 0.3; cursor: default; }
+.task__menu:focus-visible { outline: 2px solid var(--color-border-accent); }
+
+.task__title {
+  margin: 0; color: var(--color-text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.task__title.is-done { color: var(--color-text-secondary); }
+
+.task__meta { display: flex; align-items: center; gap: var(--spacing-xs); }
+.task__who { color: var(--color-text-secondary); }
+
+.task__scrim { position: fixed; inset: 0; z-index: 4; }
+.task__popover {
+  position: absolute; z-index: 5; top: 44px; right: 8px; min-width: 168px;
+  background: var(--color-bg-surface); border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(26, 23, 32, 0.16); padding: 4px 0;
+  display: flex; flex-direction: column;
+}
+.task__popover button {
+  all: unset; cursor: pointer; padding: 10px 16px; color: var(--color-text-primary);
+}
+.task__popover button:hover, .task__popover button:focus-visible { background: var(--color-bg-canvas); }
+.task__popover .task__popover-danger { color: var(--color-text-danger); }
