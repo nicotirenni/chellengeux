@@ -1,4 +1,5 @@
 *, *::before, *::after { box-sizing: border-box; }
+:root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); }
 html, body, #root { margin: 0; height: 100%; }
 body {
   font-family: var(--font); color: var(--color-text-primary);
@@ -17,7 +18,7 @@ h1, h2, h3, p { margin: 0; }
 .app__screen { position: absolute; inset: 0; overflow: hidden; background: var(--color-bg-canvas); }
 .app__scroll {
   position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
-  padding-top: env(safe-area-inset-top);
+  padding-top: var(--safe-top);
 }
 .app__scroll::-webkit-scrollbar { display: none; }
 .app__nav { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; }
@@ -27,3 +28,42 @@ h1, h2, h3, p { margin: 0; }
 .app__screen { overflow: visible; will-change: transform; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .app__scroll { overflow-x: hidden; }
 .app__dim { position: absolute; inset: 0; background: rgba(18, 10, 31, 0.16); pointer-events: none; z-index: 50; }
+
+/* Mockup de iPhone: en desktop la app se muestra dentro del teléfono, sobre fondo #292929.
+   En el celular sigue a pantalla completa, sin marco. */
+.device__status, .device__home { display: none; }
+@media (min-width: 600px) and (min-height: 640px) {
+  body { background: #292929; }
+  #root { display: flex; align-items: center; justify-content: center; min-height: 100%; height: auto; padding: 32px 0; }
+  .device {
+    position: relative; padding: 12px; border-radius: 66px; background: #111113;
+    box-shadow: inset 0 0 0 2px #3c3c41, inset 0 0 0 5px #111113, 0 0 0 1px #050505, 0 40px 90px rgba(0, 0, 0, 0.55);
+  }
+  /* Botones laterales: acción y volumen a la izquierda, encendido a la derecha. */
+  .device::before, .device::after { content: ''; position: absolute; width: 4px; background: #2a2a2e; border-radius: 2px; }
+  .device::before { left: -4px; top: 150px; height: 32px; box-shadow: 0 70px 0 0 #2a2a2e, 0 0 0 0 transparent; }
+  .device::after { right: -4px; top: 230px; height: 96px; }
+  .app {
+    width: 393px; max-width: none; height: min(852px, calc(100vh - 88px)); height: min(852px, calc(100dvh - 88px));
+    border-radius: 54px; isolation: isolate; --safe-top: 50px; --safe-bottom: 4px;
+  }
+  /* La barra de estado queda fija y opaca: el contenido scrollea por debajo de ella, no detrás. */
+  .app__scroll { top: var(--safe-top); padding-top: 0; }
+  .app__screen:is([data-screen='event'], [data-screen='edit'], [data-screen='newTask'], [data-screen='newEvent'], [data-screen='editEvent'], [data-screen='addPeople']) {
+    background: var(--color-bg-surface);
+  }
+  .device__status {
+    display: flex; align-items: center; justify-content: space-between;
+    position: absolute; top: 0; left: 0; right: 0; height: 50px; padding: 4px 30px 0 44px;
+    z-index: 70; pointer-events: none; color: var(--color-text-primary);
+  }
+  .device__time { font: 700 16px/1 -apple-system, 'SF Pro Text', system-ui, sans-serif; letter-spacing: -0.2px; }
+  .device__island {
+    position: absolute; top: 11px; left: 50%; width: 124px; height: 36px; margin-left: -62px;
+    border-radius: 20px; background: #000;
+  }
+  .device__home {
+    display: block; position: absolute; left: 50%; bottom: 8px; width: 136px; height: 5px; margin-left: -68px;
+    border-radius: 3px; background: #111; z-index: 70; pointer-events: none;
+  }
+}
