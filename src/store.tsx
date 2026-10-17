@@ -204,7 +204,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         show({ kind: 'error', message: 'No se pudo crear la tarea' });
         return false;
       }
-      const task: Task = { ...t, id: `n${seq++}`, status: 'pendiente', group: 'Más adelante' };
+      const task: Task = { ...t, id: `n${seq++}`, status: 'pendiente' };
       setTasks((ts) => [...ts, task]);
       notify([task.assignee], `${ME} le asignó «${task.title}»`, eventsRef.current.find((e) => e.id === t.eventId)?.shortName);
       show({ kind: 'confirm', message: `“${task.title}” creada`, duration: CONFIRM_MS });
@@ -233,7 +233,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (id: string, status: TaskStatus) => {
       const task = tasksRef.current.find((t) => t.id === id);
       if (!task || task.status === status) return;
-      setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status, overdue: status === 'finalizado' ? false : t.overdue } : t)));
+      setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status } : t)));
       notify([task.assignee], `${ME} pasó «${task.title}» a ${STATUS_LABEL[status]}`, eventsRef.current.find((e) => e.id === task.eventId)?.shortName);
       show({ kind: 'confirm', message: `“${task.title}” · ${STATUS_LABEL[status]}`, duration: CONFIRM_MS });
     },

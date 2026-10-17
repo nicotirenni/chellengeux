@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Avatar, Button, FilterChip, Icon } from '../components/base';
 import { Drawer, DrawerActions } from '../components/Drawer';
-import { DATES, ORGANIZER, TEAM, listNames, type Priority } from '../data';
+import { ORGANIZER, TEAM, listNames, sortKey, upcomingDates, type Priority } from '../data';
+
+const DATES = upcomingDates(60, true).map((d) => d.label);
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import './Form.css';
@@ -37,7 +39,7 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
   );
   const valid = form.title.trim().length > 0 && !!form.eventId;
   const notified = [...new Set([form.assignee, task?.assignee ?? form.assignee])].filter((p) => p !== ORGANIZER);
-  const dates = DATES.includes(initial.date) ? DATES : [initial.date, ...DATES];
+  const dates = [...new Set([initial.date, ...DATES])].sort((a, b) => sortKey(a) - sortKey(b));
   const remote = task?.remoteEdit;
   const times = [...new Set([...TIMES, initial.time, ...(remote ? [remote.time] : [])])].sort();
 

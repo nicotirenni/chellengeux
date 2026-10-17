@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Icon } from '../components/base';
-import { daysUntil, type EventItem } from '../data';
+import { daysUntil, isOverdue, type EventItem } from '../data';
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import './Home.css';
@@ -16,16 +16,17 @@ function Progress({ done, total }: { done: number; total: number }) {
 }
 
 export function Home() {
-  const { events, tasks } = useStore();
+  const { events, tasks, hidden } = useStore();
   const { push } = useNav();
   const reduce = useReducedMotion();
 
   const stats = (ev: EventItem) => {
-    const list = tasks.filter((t) => t.eventId === ev.id);
+    // Mismos datos que la lista del evento: las que esperan el deshacer ya no cuentan.
+    const list = tasks.filter((t) => t.eventId === ev.id && !hidden.includes(t.id));
     return {
       total: list.length,
       done: list.filter((t) => t.status === 'finalizado').length,
-      overdue: list.filter((t) => t.overdue && t.status !== 'finalizado').length,
+      overdue: list.filter(isOverdue).length,
     };
   };
 

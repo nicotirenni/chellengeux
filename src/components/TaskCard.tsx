@@ -1,6 +1,6 @@
 import { animate, motion, useMotionValue, useReducedMotion, useTransform, type PanInfo } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
-import { STATUS_LABEL, type Task } from '../data';
+import { STATUS_LABEL, isOverdue, type Task } from '../data';
 import { Avatar, Icon, IconLabel, StatusBadge } from './base';
 import './TaskCard.css';
 
@@ -18,9 +18,11 @@ type Props = {
   /** Abre el selector de estado. Sin esto, el estado no se puede tocar. */
   onStatus?: (id: string) => void;
   onEdit?: (id: string) => void;
+  /** En «Vencidas» de otro día y en «Más adelante» se muestra la fecha: `26 OCT · 13:00 hs`. */
+  showDate?: boolean;
 };
 
-export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, onStatus, onEdit }: Props) {
+export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, onStatus, onEdit, showDate }: Props) {
   const reduce = useReducedMotion();
   const clipRef = useRef<HTMLDivElement>(null);
   const dragged = useRef(false);
@@ -85,7 +87,9 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, 
     onOpen?.(task.id);
   };
 
-  const label = `${task.title}, ${STATUS_LABEL[task.status]}, ${task.time} hs${task.overdue ? ' vencida' : ''}, ${task.assignee}`;
+  const overdue = isOverdue(task);
+  const when = `${showDate ? `${task.date} · ` : ''}${task.time} hs`;
+  const label = `${task.title}, ${STATUS_LABEL[task.status]}, ${when}${overdue ? ' vencida' : ''}, ${task.assignee}`;
 
   return (
     <div className="task">
@@ -149,7 +153,7 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, 
           </div>
           <p className={`task__title t-cuerpo-destacado ${task.status === 'finalizado' ? 'is-done' : ''}`}>{task.title}</p>
           <div className="task__meta">
-            <IconLabel danger={task.overdue}>{task.time} hs</IconLabel>
+            <IconLabel danger={overdue}>{when}</IconLabel>
             <Avatar name={task.assignee} />
             <span className="t-leyenda task__who">{task.assignee}</span>
           </div>

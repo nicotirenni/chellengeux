@@ -1,5 +1,5 @@
 import { IconLabel, StatusBadge } from '../components/base';
-import { sortKey } from '../data';
+import { isOverdue, sortKey } from '../data';
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import './Tabs.css';
@@ -30,7 +30,7 @@ export function Calendar() {
                     <span className="row-card__main">
                       <span className="t-cuerpo-destacado row-card__title">{t.title}</span>
                       <span className="row-card__meta">
-                        <IconLabel danger={t.overdue}>{t.time} hs</IconLabel>
+                        <IconLabel danger={isOverdue(t)}>{t.time} hs</IconLabel>
                         <span className="t-leyenda muted">{ev?.shortName} · {t.assignee}</span>
                       </span>
                     </span>
