@@ -1,0 +1,66 @@
+.form-screen { min-height: 100%; display: flex; flex-direction: column; background: var(--color-bg-surface); padding-top: 8px; }
+.form-screen__nav { display: flex; padding: 12px 16px 0; }
+.form-screen__title { padding: 12px 20px 4px; color: var(--color-text-primary); }
+.form-screen__lead { padding: 4px 20px 0; color: var(--color-text-secondary); }
+.form-screen__body { flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 16px 20px 24px; }
+.form-screen__footer {
+  position: sticky; bottom: 0; padding: 12px 20px 32px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), var(--color-bg-surface) 24%);
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; border: 0; margin: 0; padding: 0; min-width: 0; }
+.field__label { color: var(--color-text-secondary); padding: 0; }
+.field__input {
+  box-sizing: border-box; width: 100%; height: 48px; padding: 0 14px;
+  border: 1px solid var(--color-border-default); border-radius: var(--radius-md);
+  background: var(--color-bg-surface); color: var(--color-text-primary); font-family: var(--font);
+  appearance: none; -webkit-appearance: none;
+}
+select.field__input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%235E596A' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+}
+.field__input:focus { outline: none; border: 2px solid var(--color-border-accent); padding: 0 13px; }
+select.field__input:focus { padding-right: 35px; }
+.field__input[aria-invalid] { border-color: var(--color-border-danger); }
+.field__pair { display: flex; align-items: center; gap: 8px; }
+.field__pair > select { flex: 1.2; }
+.field__pair > select + span + select { flex: 1; }
+.field__pair.is-reviewed select:last-child { border-color: var(--color-border-accent); background: var(--color-bg-accent-subtle); }
+.field__hint { color: var(--color-text-accent); }
+.field__error { display: inline-flex; align-items: center; gap: 4px; color: var(--color-text-danger); }
+.field__chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.notify-box {
+  display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+  border-radius: var(--radius-md); background: var(--color-bg-accent-subtle); color: var(--color-text-primary);
+}
+.notify-box .avatar { background: var(--color-bg-surface); }
+
+.conflict__row { display: flex; justify-content: space-between; color: var(--color-text-primary); }
+
+/* Mover tareas */
+.move__count { color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: flex; justify-content: space-between; align-items: center; }
+.move__all { all: unset; cursor: pointer; color: var(--color-text-accent); text-transform: none; letter-spacing: 0; }
+.move__all:focus-visible { outline: 2px solid var(--color-border-accent); border-radius: 4px; }
+.move__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.check {
+  display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; cursor: pointer;
+  border-bottom: 1px solid var(--color-border-default);
+}
+.move__list li:last-child .check { border-bottom: 0; }
+.check input {
+  appearance: none; -webkit-appearance: none; flex-shrink: 0; margin: 2px 0 0; width: 20px; height: 20px;
+  border-radius: 6px; border: 1.5px solid var(--color-border-strong); background: var(--color-bg-surface); cursor: pointer;
+  display: grid; place-content: center;
+}
+.check input:checked { background: var(--color-bg-accent); border-color: var(--color-bg-accent); }
+.check input:checked::after {
+  content: ''; width: 10px; height: 6px; margin-top: -2px;
+  border: solid #fff; border-width: 0 0 2px 2px; transform: rotate(-45deg);
+}
+.check input:focus-visible { outline: 2px solid var(--color-border-accent); outline-offset: 2px; }
+.check__text { display: flex; flex-direction: column; min-width: 0; }
+.check__text .t-cuerpo { color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.check__text .t-leyenda { color: var(--color-text-secondary); }
+.check.is-off .check__text .t-cuerpo { color: var(--color-text-secondary); }

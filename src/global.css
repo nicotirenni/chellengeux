@@ -26,3 +26,7 @@ h1, h2, h3, p { margin: 0; }
   .stage { display: block; padding: 0; }
   .phone { width: 100vw; height: 100dvh; border-radius: 0; box-shadow: none; }
 }
+.phone__scroll { background: var(--color-bg-canvas); }
+.phone__nav { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; }
+.phone__overlay { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
+.phone__overlay > * { pointer-events: auto; }

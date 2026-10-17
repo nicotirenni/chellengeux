@@ -8,13 +8,15 @@ type Props = {
   snack: Snack | null;
   onAction: (s: Snack) => void;
   onExpire: (id: number) => void;
+  /** Sin barra de navegación abajo (pantallas de formulario). */
+  raised?: boolean;
 };
 
 /** Uno a la vez: el nuevo reemplaza al anterior (el store confirma la acción previa). */
-export function SnackbarHost({ snack, onAction, onExpire }: Props) {
+export function SnackbarHost({ snack, onAction, onExpire, raised }: Props) {
   const reduce = useReducedMotion();
   return (
-    <div className="snack-host">
+    <div className={`snack-host ${raised ? 'snack-host--raised' : ''}`}>
       <AnimatePresence mode="wait">
         {snack && (
           <motion.div

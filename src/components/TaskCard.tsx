@@ -15,9 +15,12 @@ type Props = {
   onReveal: (id: string | null) => void;
   onDelete: (id: string) => void;
   onOpen?: (id: string) => void;
+  /** Abre el selector de estado. Sin esto, el estado no se puede tocar. */
+  onStatus?: (id: string) => void;
+  onEdit?: (id: string) => void;
 };
 
-export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen }: Props) {
+export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen, onStatus, onEdit }: Props) {
   const reduce = useReducedMotion();
   const clipRef = useRef<HTMLDivElement>(null);
   const dragged = useRef(false);
@@ -122,7 +125,11 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen }
           }}
         >
           <div className="task__top">
-            <StatusBadge status={task.status} />
+            <StatusBadge
+              status={task.status}
+              onClick={onStatus && (() => { onReveal(null); onStatus(task.id); })}
+              label={`Estado de ${task.title}: ${STATUS_LABEL[task.status]}. Cambiar estado`}
+            />
             <button
               type="button"
               className="task__menu"
@@ -156,6 +163,11 @@ export function TaskCard({ task, revealed, canEdit, onReveal, onDelete, onOpen }
             <button type="button" role="menuitem" className="t-cuerpo" onClick={() => { setMenuOpen(false); onOpen?.(task.id); }}>
               Ver detalle
             </button>
+            {onEdit && (
+              <button type="button" role="menuitem" className="t-cuerpo" onClick={() => { setMenuOpen(false); onEdit(task.id); }}>
+                Editar
+              </button>
+            )}
             <button
               type="button"
               role="menuitem"

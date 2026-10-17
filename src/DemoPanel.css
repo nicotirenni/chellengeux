@@ -45,3 +45,5 @@
   .demo { width: auto; height: auto; margin: 16px; }
   .demo__log { max-height: 240px; }
 }
+.demo__btn--wide { align-self: flex-start; }
+.demo__btn:disabled { opacity: 0.4; cursor: default; }

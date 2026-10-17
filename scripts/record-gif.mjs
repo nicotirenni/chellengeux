@@ -6,7 +6,7 @@ import { mkdtempSync, readdirSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const URL = process.env.URL ?? 'http://localhost:4173/';
+const URL = process.env.URL ?? 'http://localhost:4173/?evento=ocampo';
 const OUT = 'docs/f9-eliminar-tarea.gif';
 const W = 375, H = 812;
 const videoDir = mkdtempSync(join(tmpdir(), 'f9-'));
