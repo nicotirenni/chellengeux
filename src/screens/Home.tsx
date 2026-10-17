@@ -33,10 +33,12 @@ export function Home() {
   const [next, ...others] = events;
   const open = (id: string) => push({ name: 'event', eventId: id });
 
-  // La tarjeta del evento eliminado se achica y desaparece (250 ms).
+  // La tarjeta del evento eliminado se achica y desaparece (250 ms); lo de abajo sube en paralelo.
   const exit = reduce
     ? { opacity: 0, transition: { duration: 0.15 } }
-    : { opacity: 0, scale: 0.92, transition: { duration: 0.25, ease: 'easeOut' } };
+    : { opacity: 0, scale: 0.96, height: 0, marginTop: -16, transition: { duration: 0.25, ease: 'easeOut' } };
+  // Si el que se fue era el próximo evento, el siguiente entra recién cuando terminó el colapso.
+  const enter = { opacity: 1, scale: 1, height: 'auto', marginTop: 0, transition: { duration: 0.25, ease: 'easeOut', delay: reduce ? 0 : 0.25 } };
 
   return (
     <div className="home">
@@ -56,15 +58,23 @@ export function Home() {
           </div>
         )}
 
-        <AnimatePresence mode="popLayout" initial={false}>
+        {next && <h2 className="t-subtitulo">Próximo evento</h2>}
+        <AnimatePresence initial={false}>
           {next && (
-            <motion.section key={`next-${next.id}`} layout={!reduce} exit={exit} className="home__section">
-              <h2 className="t-subtitulo">Próximo evento</h2>
+            <motion.div
+              key={`next-${next.id}`}
+              className="home__collapse"
+              initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.98, height: 0, marginTop: -16 }}
+              animate={enter}
+              exit={exit}
+            >
               <Featured ev={next} {...stats(next)} onOpen={() => open(next.id)} />
-            </motion.section>
+            </motion.div>
           )}
+        </AnimatePresence>
+        <AnimatePresence initial={false}>
           {others.length > 0 && (
-            <motion.h2 key="others-title" layout={!reduce} className="t-subtitulo" exit={{ opacity: 0 }}>
+            <motion.h2 key="others-title" className="t-subtitulo" exit={{ opacity: 0 }}>
               Otros eventos
             </motion.h2>
           )}
@@ -76,7 +86,6 @@ export function Home() {
               <motion.button
                 key={ev.id}
                 type="button"
-                layout={!reduce}
                 exit={exit}
                 className="event-card"
                 onClick={() => open(ev.id)}

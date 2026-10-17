@@ -38,29 +38,3 @@ select.field__input:focus { padding-right: 35px; }
 .notify-box .avatar { background: var(--color-bg-surface); }
 
 .conflict__row { display: flex; justify-content: space-between; color: var(--color-text-primary); }
-
-/* Mover tareas */
-.move__count { color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.04em; display: flex; justify-content: space-between; align-items: center; }
-.move__all { all: unset; cursor: pointer; color: var(--color-text-accent); text-transform: none; letter-spacing: 0; }
-.move__all:focus-visible { outline: 2px solid var(--color-border-accent); border-radius: 4px; }
-.move__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.check {
-  display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; cursor: pointer;
-  border-bottom: 1px solid var(--color-border-default);
-}
-.move__list li:last-child .check { border-bottom: 0; }
-.check input {
-  appearance: none; -webkit-appearance: none; flex-shrink: 0; margin: 2px 0 0; width: 20px; height: 20px;
-  border-radius: 6px; border: 1.5px solid var(--color-border-strong); background: var(--color-bg-surface); cursor: pointer;
-  display: grid; place-content: center;
-}
-.check input:checked { background: var(--color-bg-accent); border-color: var(--color-bg-accent); }
-.check input:checked::after {
-  content: ''; width: 10px; height: 6px; margin-top: -2px;
-  border: solid #fff; border-width: 0 0 2px 2px; transform: rotate(-45deg);
-}
-.check input:focus-visible { outline: 2px solid var(--color-border-accent); outline-offset: 2px; }
-.check__text { display: flex; flex-direction: column; min-width: 0; }
-.check__text .t-cuerpo { color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.check__text .t-leyenda { color: var(--color-text-secondary); }
-.check.is-off .check__text .t-cuerpo { color: var(--color-text-secondary); }

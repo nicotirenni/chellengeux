@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar, Button, FilterChip, Icon } from '../components/base';
 import { Drawer, DrawerActions } from '../components/Drawer';
 import { ORGANIZER, TEAM, listNames, sortKey, upcomingDates, type Priority } from '../data';
@@ -11,11 +11,14 @@ import './Form.css';
 // Horarios cada 15 min, en 24 h (el input type="time" muestra AM/PM según el navegador).
 const TIMES = Array.from({ length: 24 * 4 }, (_, i) => `${String(Math.floor(i / 4)).padStart(2, '0')}:${String((i % 4) * 15).padStart(2, '0')}`);
 
+/** F6 · 3a: Martín guarda su cambio cuando Carla lleva 6 s con la tarea abierta. */
+const CONFLICT_AFTER_MS = 6000;
+
 const PRIORITIES: (Priority | undefined)[] = [undefined, 'Baja', 'Media', 'Alta'];
 
 /** F6 · 3. Editar tarea. Sin taskId, crea una tarea nueva (desde el botón Crear). */
 export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: string }) {
-  const { tasks, events, updateTask, createTask } = useStore();
+  const { tasks, events, updateTask, createTask, applyRemoteEdit } = useStore();
   const { pop } = useNav();
   const task = taskId ? tasks.find((t) => t.id === taskId) : undefined;
   const [initial] = useState(() => ({
@@ -30,6 +33,21 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
   const [saving, setSaving] = useState(false);
   const [sheet, setSheet] = useState<'discard' | 'conflict' | null>(null);
   const [reviewed, setReviewed] = useState<string | null>(null);
+  // El cambio de Martín: se captura al abrir, porque al aplicarlo la tarea deja de tenerlo pendiente.
+  const [remote] = useState(task?.remoteEdit);
+  const [conflict, setConflict] = useState(false);
+  const savingRef = useRef(false);
+
+  useEffect(() => {
+    if (!remote || !taskId) return;
+    const t = setTimeout(() => {
+      if (savingRef.current) return;
+      applyRemoteEdit(taskId);
+      setConflict(true);
+      setSheet('conflict');
+    }, CONFLICT_AFTER_MS);
+    return () => clearTimeout(t);
+  }, [remote, taskId, applyRemoteEdit]);
 
   if (taskId && !task) return null;
   const creating = !task;
@@ -40,23 +58,21 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
   const valid = form.title.trim().length > 0 && !!form.eventId;
   const notified = [...new Set([form.assignee, task?.assignee ?? form.assignee])].filter((p) => p !== ORGANIZER);
   const dates = [...new Set([initial.date, ...DATES])].sort((a, b) => sortKey(a) - sortKey(b));
-  const remote = task?.remoteEdit;
   const times = [...new Set([...TIMES, initial.time, ...(remote ? [remote.time] : [])])].sort();
 
   const save = async () => {
     setSheet(null);
     setSaving(true);
+    savingRef.current = true;
     const { eventId: ev, ...fields } = { ...form, title: form.title.trim() };
     const ok = task ? await updateTask(task.id, fields) : await createTask({ eventId: ev, ...fields });
     setSaving(false);
+    savingRef.current = false;
     if (ok) pop();
   };
 
-  const onSave = () => {
-    // 3a · Solo aparece si otra persona editó la tarea mientras estaba abierta.
-    if (remote && !reviewed) return setSheet('conflict');
-    void save();
-  };
+  // 3a · Si Martín cambió la tarea mientras estaba abierta y Carla todavía no lo resolvió, se pregunta antes de guardar.
+  const onSave = () => (conflict && !reviewed ? setSheet('conflict') : void save());
 
   const onClose = () => (dirty ? setSheet('discard') : pop());
 
@@ -65,6 +81,11 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
     setForm((f) => ({ ...f, time: remote.time }));
     setReviewed(remote.time);
     setSheet(null);
+  };
+
+  const saveAnyway = () => {
+    setReviewed(form.time);
+    void save();
   };
 
   return (
@@ -111,7 +132,7 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
               {times.map((t) => <option key={t}>{t}</option>)}
             </select>
           </div>
-          {reviewed && remote && (
+          {reviewed && remote && reviewed === remote.time && (
             <span className="field__hint t-leyenda">
               {remote.by} lo cambió a las {reviewed} hace {remote.minutesAgo} min. Revisalo y guardá de nuevo.
             </span>
@@ -157,7 +178,7 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
       </Drawer>
 
       {/* 3a · Alguien la cambió antes */}
-      {remote && task && (
+      {remote && task && conflict && (
         <Drawer
           open={sheet === 'conflict'}
           onClose={() => setSheet(null)}
@@ -166,12 +187,12 @@ export function TaskForm({ taskId, eventId }: { taskId?: string; eventId?: strin
           description="Si guardás, tu versión reemplaza la suya."
         >
           <div className="summary t-leyenda">
-            <div className="conflict__row"><span className="muted">Su versión</span><span>{task.date} · {remote.time}</span></div>
+            <div className="conflict__row"><span className="muted">Su versión</span><span>{initial.date} · {remote.time}</span></div>
             <div className="summary__divider" />
             <div className="conflict__row"><span className="muted">Tu versión</span><strong>{form.date} · {form.time}</strong></div>
           </div>
           <DrawerActions>
-            <Button onClick={() => void save()}>Guardar igual</Button>
+            <Button onClick={saveAnyway}>Guardar igual</Button>
             <Button variant="secondary" onClick={review} data-initial-focus>Revisar</Button>
           </DrawerActions>
         </Drawer>

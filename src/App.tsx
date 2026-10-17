@@ -8,7 +8,6 @@ import { NavProvider, useNav, type Route, type Tab } from './nav';
 import { Calendar } from './screens/Calendar';
 import { EventScreen } from './screens/Event';
 import { Home } from './screens/Home';
-import { MoveTasks } from './screens/MoveTasks';
 import { NewEvent } from './screens/NewEvent';
 import { Notices } from './screens/Notices';
 import { Search } from './screens/Search';
@@ -28,7 +27,6 @@ function Screen({ route, active }: { route: Route; active: boolean }) {
     case 'edit': return <TaskForm taskId={route.taskId} />;
     case 'newTask': return <TaskForm eventId={route.eventId} />;
     case 'newEvent': return <NewEvent />;
-    case 'move': return <MoveTasks eventId={route.eventId} />;
   }
 }
 

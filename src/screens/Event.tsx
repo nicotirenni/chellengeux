@@ -302,7 +302,7 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
           onClose={close}
           alert
           title={`¿Eliminar ${ev.name}?`}
-          description="Podés mover las tareas a otro evento antes de eliminarlo. No se puede deshacer."
+          description={`Se eliminan sus ${tareas(all.length)}. No se puede deshacer.`}
         >
           <div className="summary">
             <div className="summary__stats">
@@ -320,12 +320,10 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
               </>
             )}
           </div>
+          {/* La opción segura primero; la destructiva en rojo. */}
           <DrawerActions>
-            {events.length > 1 && (
-              <Button onClick={() => { close(); push({ name: 'move', eventId }); }}>Mover tareas y eliminar</Button>
-            )}
-            <Button variant="danger-outline" onClick={() => { close(); home(); deleteEvent(eventId); }}>Eliminar todo</Button>
-            <Button variant="text" onClick={close} data-initial-focus>Cancelar</Button>
+            <Button onClick={close} data-initial-focus>Cancelar</Button>
+            <Button variant="danger-outline" onClick={() => { close(); home(); deleteEvent(eventId); }}>Eliminar evento</Button>
           </DrawerActions>
         </Drawer>
       ) : (

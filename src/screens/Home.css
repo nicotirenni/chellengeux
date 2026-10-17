@@ -44,3 +44,5 @@
 .event-card__info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .event-card__info .t-subtitulo { color: var(--color-text-primary); }
 .event-card__row { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.home__collapse { overflow: hidden; }
+.event-card { overflow: hidden; }

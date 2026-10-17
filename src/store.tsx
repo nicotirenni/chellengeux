@@ -31,7 +31,6 @@ export type Activity = {
 export type TaskPatch = Partial<Pick<Task, 'title' | 'date' | 'time' | 'assignee' | 'priority'>>;
 export type NewTask = { eventId: string; title: string; date: string; time: string; assignee: string; priority?: Priority };
 export type NewEvent = { type: string; name: string; date: string; iso: string };
-export type MovePlan = { to: string; taskIds: string[] };
 
 type Store = {
   events: EventItem[];
@@ -46,7 +45,9 @@ type Store = {
   createTask: (t: NewTask) => Promise<boolean>;
   createEvent: (e: NewEvent) => Promise<string | null>;
   setStatus: (id: string, status: TaskStatus) => void;
-  deleteEvent: (id: string, move?: MovePlan) => void;
+  deleteEvent: (id: string) => void;
+  /** Martín guarda un cambio de horario mientras Carla tiene la tarea abierta (F6 · 3a). */
+  applyRemoteEdit: (id: string) => void;
   undo: () => void;
   expireSnack: (snackId: number) => void;
   snackAction: (snack: Snack) => void;
@@ -242,40 +243,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   /** Eliminar evento: no se puede deshacer, por eso se confirma antes con el Drawer. */
   const deleteEvent = useCallback(
-    async (id: string, move?: MovePlan) => {
+    async (id: string) => {
       const ev = eventsRef.current.find((e) => e.id === id);
       if (!ev) return;
-      const target = move && eventsRef.current.find((e) => e.id === move.to);
       flushPending();
       setSnack(null);
       try {
         await request();
         const all = tasksRef.current.filter((t) => t.eventId === id);
-        const moved = new Set(move?.taskIds ?? []);
-        setTasks((ts) =>
-          ts.flatMap((t) => (t.eventId !== id ? [t] : moved.has(t.id) && move ? [{ ...t, eventId: move.to }] : [])),
-        );
+        setTasks((ts) => ts.filter((t) => t.eventId !== id));
         // La tarjeta del evento se achica y desaparece (250 ms); después entra el Snackbar.
         setEvents((es) => es.filter((e) => e.id !== id));
         const people = ev.people.length ? ev.people : [...new Set(all.map((t) => t.assignee))];
-        const sent = notify(
-          people,
-          moved.size > 0 && target
-            ? `${ME} eliminó «${ev.shortName}» y pasó ${moved.size} ${moved.size === 1 ? 'tarea' : 'tareas'} a ${target.shortName}`
-            : `${ME} eliminó «${ev.shortName}»`,
-        );
+        const sent = notify(people, `${ME} eliminó «${ev.shortName}»`);
         await wait(300);
         show({
           kind: 'confirm',
-          message: moved.size > 0
-            ? 'Tareas movidas · Evento eliminado'
-            : sent > 0 ? `Evento eliminado · ${sent} ${sent === 1 ? 'aviso enviado' : 'avisos enviados'}` : 'Evento eliminado',
+          message: sent > 0 ? `Evento eliminado · ${sent} ${sent === 1 ? 'aviso enviado' : 'avisos enviados'}` : 'Evento eliminado',
           duration: CONFIRM_MS,
         });
       } catch {
         show({
           kind: 'error', message: 'No se pudo eliminar el evento', action: 'Reintentar',
-          onRetry: () => void deleteEventRef.current?.(id, move),
+          onRetry: () => void deleteEventRef.current?.(id),
         });
       }
     },
@@ -283,6 +273,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   );
   const deleteEventRef = useRef(deleteEvent);
   deleteEventRef.current = deleteEvent;
+
+  const applyRemoteEdit = useCallback((id: string) => {
+    const task = tasksRef.current.find((t) => t.id === id);
+    const remote = task?.remoteEdit;
+    if (!task || !remote) return;
+    // El cambio de Martín ya está en el servidor: si Carla descarta, queda el de él.
+    setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, time: remote.time, remoteEdit: undefined } : t)));
+    const ev = eventsRef.current.find((e) => e.id === task.eventId)?.shortName;
+    setActivity((a) => [
+      { id: seq++, kind: 'received' as const, people: [remote.by], text: `${remote.by} cambió «${task.title}» a las ${remote.time}`, event: ev, at: Date.now() - remote.minutesAgo * 60_000 },
+      ...a,
+    ]);
+    setUnread((n) => n + 1);
+  }, []);
 
   const undo = useCallback(() => {
     const p = pending.current;
@@ -320,7 +324,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     <Ctx.Provider
       value={{
         events, tasks, hidden, snack, activity, unread, markRead,
-        deleteTask, updateTask, createTask, createEvent, setStatus, deleteEvent, undo, expireSnack, snackAction,
+        deleteTask, updateTask, createTask, createEvent, setStatus, deleteEvent, applyRemoteEdit, undo, expireSnack, snackAction,
       }}
     >
       {children}
