@@ -154,7 +154,8 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
     open: (id) => setSheet({ kind: 'detail', taskId: id }),
     status: (id) => setSheet({ kind: 'status', taskId: id }),
     edit: (id) => {
-      reopen.current = id;
+      // Al volver de Editar se reabre el detalle solo si se entró desde el detalle (no desde el ⋮ de la tarjeta).
+      reopen.current = sheet?.kind === 'detail' ? id : null;
       setSheet(null);
       push({ name: 'edit', taskId: id });
     },

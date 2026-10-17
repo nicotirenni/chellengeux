@@ -8,8 +8,10 @@ import './PeoplePicker.css';
 export function PeoplePicker({ exclude = [], selected, onToggle }: { exclude?: string[]; selected: string[]; onToggle: (name: string) => void }) {
   const [q, setQ] = useState('');
   const term = norm(q.trim());
+  // Coincide por el comienzo de cada palabra del nombre o del email ("ma" → Martín, no "gmail").
+  const words = (c: (typeof CONTACTS)[number]) => norm(`${c.fullName} ${c.email}`).split(/[\s.@_-]+/);
   const people = CONTACTS.filter((c) => c.name !== ORGANIZER && !exclude.includes(c.name)).filter(
-    (c) => !term || norm(`${c.fullName} ${c.email}`).includes(term),
+    (c) => !term || norm(c.fullName).startsWith(term) || norm(c.email).startsWith(term) || words(c).some((w) => w.startsWith(term)),
   );
 
   return (

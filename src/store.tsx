@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ORGANIZER, STATUS_LABEL, listNames, seedEvents, seedTasks, shiftDate,
   type EventItem, type Priority, type Task, type TaskStatus,
@@ -338,6 +338,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     ]);
     setUnread((n) => n + 1);
   }, []);
+
+  /** Alguien del equipo cambia el estado de una tarea desde su teléfono: llega como notificación. */
+  const receiveStatus = useCallback((id: string, by: string, status: TaskStatus) => {
+    const task = tasksRef.current.find((t) => t.id === id);
+    if (!task) return;
+    setTasks((ts) => ts.map((t) => (t.id === id ? { ...t, status } : t)));
+    const ev = eventsRef.current.find((e) => e.id === task.eventId)?.name;
+    setActivity((a) => [{ id: seq++, kind: 'received' as const, people: [by], text: `${by} pasó «${task.title}» a ${STATUS_LABEL[status]}`, event: ev, at: Date.now() }, ...a]);
+    setUnread((n) => n + 1);
+  }, []);
+
+  // Solo para grabar las demos (?rec en la URL): el script dispara lo que en la vida real llega del servidor.
+  // No hay ningún control visible en la interfaz.
+  useEffect(() => {
+    if (!new URLSearchParams(location.search).has('rec')) return;
+    (window as unknown as { __rec: object }).__rec = { receiveStatus };
+  }, [receiveStatus]);
 
   const undo = useCallback(() => {
     const p = pending.current;
