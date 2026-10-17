@@ -22,9 +22,9 @@ export function SnackbarHost({ snack, onAction, onExpire, raised }: Props) {
         {snack && (
           <motion.div
             key={snack.id}
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0, transition: SNACK_IN }}
-            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { opacity: 0, y: 24, transition: SNACK_OUT }}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, transform: 'translateY(24px)' }}
+            animate={reduce ? { opacity: 1, transition: SNACK_IN } : { opacity: 1, transform: 'translateY(0px)', transition: SNACK_IN }}
+            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { opacity: 0, transform: 'translateY(24px)', transition: SNACK_OUT }}
           >
             <Snackbar snack={snack} onAction={onAction} onExpire={onExpire} />
           </motion.div>

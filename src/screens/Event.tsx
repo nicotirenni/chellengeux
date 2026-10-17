@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar, Button, FilterChip, Icon, PriorityBadge, StatusBadge } from '../components/base';
 import { Drawer, DrawerActions } from '../components/Drawer';
 import { TaskCard } from '../components/TaskCard';
@@ -51,6 +51,71 @@ function buildRows(list: Task[], eventDay: string): Row[] {
   return rows;
 }
 
+type RowActions = {
+  reveal: (id: string | null) => void;
+  remove: (id: string) => void;
+  open: (id: string) => void;
+  status: (id: string) => void;
+  edit: (id: string) => void;
+};
+
+type RowProps = { r: Row; revealed: boolean; reduce: boolean; actions: RowActions };
+
+/**
+ * Una fila de la lista. Memorizada: abrir un Drawer o pasar a otra pantalla no vuelve a dibujar
+ * (ni a medir) las 25 tarjetas, que es lo que trababa las animaciones en equipos lentos.
+ */
+const ListRow = memo(
+  forwardRef<HTMLLIElement, RowProps>(function ListRow({ r, revealed, reduce, actions }, ref) {
+    return (
+      <motion.li
+        ref={ref}
+        layout={!reduce}
+        className={r.kind === 'task' ? `tasklist__task ${r.task.status === 'finalizado' ? 'is-done' : ''}` : `tasklist__row`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, transition: { duration: 0.25, ease: 'easeOut' } }}
+        exit={{ opacity: 0, transition: { duration: reduce ? 0.15 : 0.25, ease: 'easeOut' } }}
+        transition={{ layout: { duration: 0.25, ease: 'easeOut' } }}
+      >
+        {r.kind === 'head' ? (
+          <div className={`tasklist__head ${r.tone === 'danger' ? 'is-danger' : ''}`}>
+            <h2 className="t-subtitulo">{r.label}</h2>
+            <span className="t-leyenda">{tareas(r.count)}</span>
+          </div>
+        ) : r.kind === 'empty' ? (
+          <p className="tasklist__empty t-leyenda">{r.text}</p>
+        ) : (
+          <TaskCard
+            task={r.task}
+            canEdit
+            showDate={r.showDate}
+            revealed={revealed}
+            onReveal={actions.reveal}
+            onDelete={actions.remove}
+            onOpen={actions.open}
+            onStatus={actions.status}
+            onEdit={actions.edit}
+          />
+        )}
+      </motion.li>
+    );
+  }),
+  (a, b) =>
+    a.revealed === b.revealed &&
+    a.reduce === b.reduce &&
+    a.actions === b.actions &&
+    a.r.key === b.r.key &&
+    (a.r.kind === 'task' && b.r.kind === 'task'
+      ? a.r.task === b.r.task && a.r.showDate === b.r.showDate
+      : a.r.kind === 'head' && b.r.kind === 'head'
+        ? a.r.label === b.r.label && a.r.count === b.r.count && a.r.tone === b.r.tone
+        : a.r.kind === b.r.kind),
+);
+
+/** Al entrar, primero se dibuja lo que entra en pantalla; el resto, cuando terminó la transición. */
+const FIRST_ROWS = 9;
+const REST_AFTER_MS = 500;
+
 type Sheet =
   | { kind: 'detail'; taskId: string }
   | { kind: 'status'; taskId: string }
@@ -69,6 +134,38 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
   const [sheet, setSheet] = useState<Sheet>(() => (openTaskId ? { kind: 'detail', taskId: openTaskId } : null));
   // Al volver de Editar, se reabre el detalle de la tarea con los datos nuevos.
   const reopen = useRef<string | null>(null);
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setFull(true), REST_AFTER_MS);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Acciones estables para las filas memorizadas; siempre llaman a la versión actual.
+  const latest = useRef<RowActions>(null as unknown as RowActions);
+  latest.current = {
+    reveal: setRevealed,
+    remove: (id) => {
+      setRevealed(null);
+      deleteTask(id);
+    },
+    open: (id) => setSheet({ kind: 'detail', taskId: id }),
+    status: (id) => setSheet({ kind: 'status', taskId: id }),
+    edit: (id) => {
+      reopen.current = id;
+      setSheet(null);
+      push({ name: 'edit', taskId: id });
+    },
+  };
+  const actions = useMemo<RowActions>(
+    () => ({
+      reveal: (id) => latest.current.reveal(id),
+      remove: (id) => latest.current.remove(id),
+      open: (id) => latest.current.open(id),
+      status: (id) => latest.current.status(id),
+      edit: (id) => latest.current.edit(id),
+    }),
+    [],
+  );
 
   // Mientras la pantalla sale (después de eliminar el evento), se sigue mostrando el último estado.
   const found = events.find((e) => e.id === eventId);
@@ -92,20 +189,12 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
   // los chips, el resumen de eliminar y los números del Home.
   const all = tasks.filter((t) => t.eventId === eventId && !hidden.includes(t.id));
   const visible = all.filter((t) => filter === 'todas' || t.status === filter);
-  const rows = buildRows(visible, ev.date.split(' ').slice(0, 2).join(' '));
+  const allRows = buildRows(visible, ev.date.split(' ').slice(0, 2).join(' '));
+  const rows = full ? allRows : allRows.slice(0, FIRST_ROWS);
   const sheetTask = sheet && 'taskId' in sheet ? tasks.find((t) => t.id === sheet.taskId) : undefined;
   const close = () => setSheet(null);
 
-  const handleDelete = (id: string) => {
-    setRevealed(null);
-    deleteTask(id);
-  };
-
-  const edit = (id: string) => {
-    reopen.current = id;
-    setSheet(null);
-    push({ name: 'edit', taskId: id });
-  };
+  const edit = actions.edit;
 
   const count = (s: TaskStatus) => all.filter((t) => t.status === s).length;
 
@@ -172,36 +261,7 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
           <ul className="tasklist" aria-label="Tareas">
             <AnimatePresence mode="popLayout" initial={false}>
               {rows.map((r) => (
-                <motion.li
-                  key={r.key}
-                  layout={!reduce}
-                  className={r.kind === 'task' ? `tasklist__task ${r.task.status === 'finalizado' ? 'is-done' : ''}` : `tasklist__row`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, transition: { duration: 0.25, ease: 'easeOut' } }}
-                  exit={{ opacity: 0, transition: { duration: reduce ? 0.15 : 0.25, ease: 'easeOut' } }}
-                  transition={{ layout: { duration: 0.25, ease: 'easeOut' } }}
-                >
-                  {r.kind === 'head' ? (
-                    <div className={`tasklist__head ${r.tone === 'danger' ? 'is-danger' : ''}`}>
-                      <h2 className="t-subtitulo">{r.label}</h2>
-                      <span className="t-leyenda">{tareas(r.count)}</span>
-                    </div>
-                  ) : r.kind === 'empty' ? (
-                    <p className="tasklist__empty t-leyenda">{r.text}</p>
-                  ) : (
-                    <TaskCard
-                      task={r.task}
-                      canEdit
-                      showDate={r.showDate}
-                      revealed={revealed === r.task.id}
-                      onReveal={setRevealed}
-                      onDelete={handleDelete}
-                      onOpen={(id) => setSheet({ kind: 'detail', taskId: id })}
-                      onStatus={(id) => setSheet({ kind: 'status', taskId: id })}
-                      onEdit={edit}
-                    />
-                  )}
-                </motion.li>
+                <ListRow key={r.key} r={r} revealed={r.kind === 'task' && revealed === r.task.id} reduce={!!reduce} actions={actions} />
               ))}
             </AnimatePresence>
           </ul>

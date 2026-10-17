@@ -62,9 +62,11 @@ function AppShell() {
               aria-hidden={!active}
               {...({ inert: active ? undefined : '' } as object)}
               style={{ zIndex: i + 1 }}
-              initial={i === 0 ? false : reduce ? { opacity: 0 } : { x: '100%' }}
-              animate={reduce ? { opacity: 1 } : { x: covered ? '-24%' : 0 }}
-              exit={reduce ? { opacity: 0 } : { x: '100%' }}
+              // `transform` como texto: Framer lo anima con WAAPI en el compositor, así no se traba
+              // aunque el hilo principal esté armando la pantalla nueva.
+              initial={i === 0 ? false : reduce ? { opacity: 0 } : { transform: 'translateX(100%)' }}
+              animate={reduce ? { opacity: 1 } : { transform: covered ? 'translateX(-24%)' : 'translateX(0%)' }}
+              exit={reduce ? { opacity: 0 } : { transform: 'translateX(100%)' }}
               transition={reduce ? { duration: 0.15 } : SCREEN}
             >
               {i === 0 ? (
@@ -110,9 +112,9 @@ function AppShell() {
           <motion.div
             key="nav"
             className="app__nav"
-            initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24 }}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, transform: 'translateY(24px)' }}
+            animate={reduce ? { opacity: 1 } : { opacity: 1, transform: 'translateY(0px)' }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, transform: 'translateY(24px)' }}
             transition={SCREEN}
           >
             <BottomNav

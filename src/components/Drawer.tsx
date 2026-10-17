@@ -80,6 +80,13 @@ export function Drawer({ open, onClose, title, description, alert, top, children
             exit={{ opacity: 0, transition: DRAWER_OUT }}
             onClick={onClose}
           />
+          {/* Dos capas: la de afuera sube y baja (WAAPI, en el compositor); la de adentro se arrastra. */}
+          <motion.div
+            className="drawer__slide"
+            initial={reduce ? { opacity: 0 } : { transform: 'translateY(100%)' }}
+            animate={reduce ? { opacity: 1, transition: { duration: 0.15 } } : { transform: 'translateY(0%)', transition: DRAWER_IN }}
+            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { transform: 'translateY(100%)', transition: DRAWER_OUT }}
+          >
           <motion.div
             ref={sheet}
             className="drawer__sheet"
@@ -87,9 +94,6 @@ export function Drawer({ open, onClose, title, description, alert, top, children
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={description ? descId : undefined}
-            initial={reduce ? { opacity: 0 } : { y: '100%' }}
-            animate={reduce ? { opacity: 1, transition: { duration: 0.15 } } : { y: 0, transition: DRAWER_IN }}
-            exit={reduce ? { opacity: 0, transition: { duration: 0.15 } } : { y: '100%', transition: DRAWER_OUT }}
             drag={reduce ? false : 'y'}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 1 }}
@@ -103,6 +107,7 @@ export function Drawer({ open, onClose, title, description, alert, top, children
               {description && <p id={descId} className="t-cuerpo drawer__desc">{description}</p>}
             </div>
             {children}
+          </motion.div>
           </motion.div>
         </div>
       )}

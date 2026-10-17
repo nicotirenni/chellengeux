@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { IconLabel, StatusBadge } from '../components/base';
 import { isOverdue, sortKey } from '../data';
 import { useNav } from '../nav';
@@ -8,9 +9,16 @@ import './Tabs.css';
 export function Calendar() {
   const { tasks, events, hidden } = useStore();
   const { push } = useNav();
-  const open = tasks
+  // Primero lo que entra en pantalla; el resto cuando terminó el fundido de la pestaña.
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setFull(true), 300);
+    return () => clearTimeout(t);
+  }, []);
+  const all = tasks
     .filter((t) => t.status !== 'finalizado' && !hidden.includes(t.id))
     .sort((a, b) => sortKey(a.date, a.time) - sortKey(b.date, b.time));
+  const open = full ? all : all.slice(0, 8);
   const days = [...new Set(open.map((t) => t.date))];
 
   return (

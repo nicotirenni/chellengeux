@@ -1,7 +1,8 @@
 .drawer { position: absolute; inset: 0; z-index: 40; pointer-events: auto; }
 .drawer__scrim { position: absolute; inset: 0; background: rgba(18, 10, 31, 0.5); }
+.drawer__slide { position: absolute; left: 0; right: 0; bottom: 0; max-height: calc(100% - 48px); display: flex; flex-direction: column; }
 .drawer__sheet {
-  position: absolute; left: 0; right: 0; bottom: 0; max-height: calc(100% - 48px); overflow-y: auto;
+  position: relative; min-height: 0; overflow-y: auto;
   display: flex; flex-direction: column; gap: 16px; padding: 12px 20px 32px;
   background: var(--color-bg-surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   touch-action: none;
