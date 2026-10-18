@@ -77,7 +77,7 @@ export function EditEvent({ eventId }: { eventId: string }) {
 
         <Alert>
           Si cambiás la fecha, podés mover las tareas con ella.
-          {n > 0 && ` ${n === 1 ? 'La persona del equipo recibe' : `Las ${n} personas del equipo reciben`} un aviso al guardar.`}
+          {n > 0 && ` Cuando guardes, ${n === 1 ? 'le avisamos a la persona' : `les avisamos a las ${n} personas`} del equipo.`}
         </Alert>
       </div>
 
@@ -86,7 +86,7 @@ export function EditEvent({ eventId }: { eventId: string }) {
         <Button variant="text" onClick={() => (dirty ? setDiscard(true) : pop())}>Cancelar</Button>
       </div>
 
-      <Drawer open={discard} onClose={() => setDiscard(false)} alert title="¿Descartar los cambios?" description="Lo que cambiaste en este evento no se va a guardar.">
+      <Drawer open={discard} onClose={() => setDiscard(false)} alert title="¿Descartar los cambios?" description="Si salís ahora, perdés lo que cambiaste.">
         <DrawerActions>
           <Button onClick={() => setDiscard(false)} data-initial-focus>Seguir editando</Button>
           <Button variant="danger-outline" onClick={pop}>Descartar</Button>

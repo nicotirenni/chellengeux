@@ -4,7 +4,7 @@ W,H=1920,1080
 SRC='/home/user/chellengeux/gifs/'
 SHOTS=[  # archivo, inicio, duración, título, bajada
  ('01-eliminar-tarea-deshacer',2.6,4.8,'Eliminar con deshacer','Deslizás, eliminás y tenés\n5 segundos para arrepentirte.'),
- ('03-eliminar-evento',6.4,3.6,'Eliminar evento','Resumen antes de confirmar.\nEl equipo recibe un aviso.'),
+ ('03-eliminar-evento',6.4,3.6,'Eliminar evento','Resumen antes de confirmar.\nLe avisamos al equipo.'),
  ('07-crear-evento-2-pasos',6.6,4.0,'Crear evento en 2 pasos','Buscás colaboradores\ny el evento queda listo.'),
 ]
 PH=940; PW=round(PH*780/1688); BZ=14; R=56

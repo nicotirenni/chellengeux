@@ -141,11 +141,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setTasks((ts) => ts.filter((t) => t.id !== taskId));
         unhide(taskId);
         notify([task.assignee], `${ME} eliminó «${task.title}»`, ev?.name);
-        if (opts.confirmOnSuccess) show({ kind: 'confirm', message: `“${task.title}” eliminada`, duration: CONFIRM_MS });
+        if (opts.confirmOnSuccess) show({ kind: 'confirm', message: `Eliminaste “${task.title}”`, duration: CONFIRM_MS });
       } catch {
         unhide(taskId);
         show({
-          kind: 'error', message: 'No se pudo eliminar', action: 'Reintentar',
+          kind: 'error', message: 'No pudimos eliminar la tarea', action: 'Reintentar',
           onRetry: () => {
             hide(taskId);
             void commitRef.current?.(taskId, { confirmOnSuccess: true });
@@ -163,7 +163,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!task) return;
       flushPending();
       hide(id);
-      const snackId = show({ kind: 'undo', message: `“${task.title}” eliminada`, action: 'Deshacer', duration: UNDO_MS });
+      const snackId = show({ kind: 'undo', message: `Eliminaste “${task.title}”`, action: 'Deshacer', duration: UNDO_MS });
       pending.current = { taskId: id, snackId };
     },
     [flushPending, show],
@@ -177,7 +177,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         await request();
       } catch {
-        show({ kind: 'error', message: 'No se pudieron guardar los cambios' });
+        show({ kind: 'error', message: 'No pudimos guardar tus cambios' });
         return false;
       }
       // Guardar resuelve el conflicto: la versión de Carla queda como la última.
@@ -195,7 +195,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             : `${ME} editó «${next.title}»`;
       notify([next.assignee], text, ev);
       if (next.assignee !== task.assignee) notify([task.assignee], next.assignee ? `${ME} pasó «${next.title}» a ${next.assignee}` : `${ME} dejó «${next.title}» sin asignar`, ev);
-      show({ kind: 'confirm', message: 'Cambios guardados', duration: CONFIRM_MS });
+      show({ kind: 'confirm', message: 'Listo, guardamos tus cambios', duration: CONFIRM_MS });
       return true;
     },
     [notify, show],
@@ -206,13 +206,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         await request();
       } catch {
-        show({ kind: 'error', message: 'No se pudo crear la tarea' });
+        show({ kind: 'error', message: 'No pudimos crear la tarea' });
         return false;
       }
       const task: Task = { ...t, id: `n${seq++}`, status: 'pendiente' };
       setTasks((ts) => [...ts, task]);
       notify([task.assignee], `${ME} le asignó «${task.title}»`, eventsRef.current.find((e) => e.id === t.eventId)?.name);
-      show({ kind: 'confirm', message: `“${task.title}” creada`, duration: CONFIRM_MS });
+      show({ kind: 'confirm', message: `Creaste “${task.title}”`, duration: CONFIRM_MS });
       return true;
     },
     [notify, show],
@@ -223,13 +223,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         await request();
       } catch {
-        show({ kind: 'error', message: 'No se pudo crear el evento' });
+        show({ kind: 'error', message: 'No pudimos crear el evento' });
         return null;
       }
       const ev: EventItem = { id: `e${seq++}`, type: e.type, name: e.name, date: `${e.date} ${e.iso.slice(0, 4)}`, iso: e.iso, people: e.people };
       setEvents((es) => [...es, ev].sort((a, b) => a.iso.localeCompare(b.iso)));
       notify(e.people, `${ME} te sumó a «${ev.name}»`, ev.name);
-      show({ kind: 'confirm', message: `“${ev.name}” creado`, duration: CONFIRM_MS });
+      show({ kind: 'confirm', message: `Creaste “${ev.name}”`, duration: CONFIRM_MS });
       return ev.id;
     },
     [notify, show],
@@ -242,7 +242,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         await request();
       } catch {
-        show({ kind: 'error', message: 'No se pudieron guardar los cambios' });
+        show({ kind: 'error', message: 'No pudimos guardar tus cambios' });
         return false;
       }
       const next: EventItem = {
@@ -258,7 +258,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         next.date !== ev.date ? `${ME} pasó «${next.name}» al ${patch.date}` : `${ME} editó «${next.name}»`,
         next.name,
       );
-      show({ kind: 'confirm', message: 'Cambios guardados', duration: CONFIRM_MS });
+      show({ kind: 'confirm', message: 'Listo, guardamos tus cambios', duration: CONFIRM_MS });
       return true;
     },
     [notify, show],
@@ -271,7 +271,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       try {
         await request();
       } catch {
-        show({ kind: 'error', message: 'No se pudieron agregar' });
+        show({ kind: 'error', message: 'No pudimos sumar a esas personas' });
         return false;
       }
       setEvents((es) => es.map((e) => (e.id === eventId ? { ...e, people: [...new Set([...e.people, ...people])] } : e)));
@@ -310,12 +310,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         await wait(300);
         show({
           kind: 'confirm',
-          message: sent > 0 ? `Evento eliminado · ${sent} ${sent === 1 ? 'aviso enviado' : 'avisos enviados'}` : 'Evento eliminado',
+          message: sent > 0 ? `Eliminaste el evento · Avisamos a ${sent} ${sent === 1 ? 'persona' : 'personas'}` : 'Eliminaste el evento',
           duration: CONFIRM_MS,
         });
       } catch {
         show({
-          kind: 'error', message: 'No se pudo eliminar el evento', action: 'Reintentar',
+          kind: 'error', message: 'No pudimos eliminar el evento', action: 'Reintentar',
           onRetry: () => void deleteEventRef.current?.(id),
         });
       }

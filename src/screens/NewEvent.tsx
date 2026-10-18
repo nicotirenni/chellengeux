@@ -92,7 +92,7 @@ export function NewEvent() {
               <h1 className="t-titulo form-screen__title">Agregar colaboradores</h1>
               <div className="form-screen__body">
                 <PeoplePicker selected={people} onToggle={toggle} />
-                <Alert>Este paso es opcional. Cada colaborador recibe un aviso al crear el evento.</Alert>
+                <Alert>Este paso es opcional. Al crear el evento, les avisamos a quienes sumes.</Alert>
               </div>
             </>
           )}

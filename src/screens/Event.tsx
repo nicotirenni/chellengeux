@@ -388,8 +388,8 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
           open={sheet?.kind === 'delete'}
           onClose={close}
           alert
-          title={`¿Eliminar ${ev.name}?`}
-          description={`Se eliminan sus ${tareas(all.length)}. No se puede deshacer.`}
+          title={`¿Eliminás ${ev.name}?`}
+          description={`Se eliminan sus ${tareas(all.length)} y no hay vuelta atrás.`}
         >
           <div className="summary">
             <div className="summary__stats">
@@ -402,7 +402,7 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
                 <div className="summary__divider" />
                 <div className="summary__people t-leyenda">
                   <Icon name="users-18" size={18} />
-                  {listNames(ev.people)} {ev.people.length === 1 ? 'recibirá' : 'recibirán'} un aviso
+                  {ev.people.length === 1 ? 'Le' : 'Les'} vamos a avisar a {listNames(ev.people)}
                 </div>
               </>
             )}
@@ -418,8 +418,8 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
           open={sheet?.kind === 'delete'}
           onClose={close}
           alert
-          title="¿Eliminar este evento?"
-          description={ev.people.length ? `No tiene tareas. ${listNames(ev.people)} ${ev.people.length === 1 ? 'recibirá' : 'recibirán'} un aviso.` : 'No tiene tareas ni personas para avisar.'}
+          title="¿Eliminás este evento?"
+          description={ev.people.length ? `No vas a poder deshacerlo. ${ev.people.length === 1 ? 'Le' : 'Les'} vamos a avisar a ${listNames(ev.people)}.` : 'No vas a poder deshacerlo.'}
         >
           <DrawerActions>
             <Button variant="danger" onClick={() => { close(); home(); deleteEvent(eventId); }}>Eliminar</Button>
@@ -437,7 +437,7 @@ function Team({ ev, tasks, onAdd }: { ev: EventItem; tasks: Task[]; onAdd: () =>
     return (
       <div className="team-empty">
         <span className="team-empty__icon"><Icon name="users-accent" size={32} /></span>
-        <h2 className="t-subtitulo">Todavía no hay colaboradores</h2>
+        <h2 className="t-subtitulo">Todavía no sumaste a nadie</h2>
         <p className="t-cuerpo">Sumá personas para repartir las tareas y avisarles de los cambios.</p>
         <Button onClick={onAdd}>Agregar colaboradores</Button>
       </div>

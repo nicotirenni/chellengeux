@@ -37,7 +37,7 @@ export function Notices({ active }: { active: boolean }) {
       {loading ? (
         <SkGroup><SkRow avatar /><SkRow avatar /><SkRow avatar /></SkGroup>
       ) : activity.length === 0 ? (
-        <p className="tab-screen__empty t-cuerpo">Todavía no hay notificaciones.</p>
+        <p className="tab-screen__empty t-cuerpo">Todavía no tenés notificaciones.</p>
       ) : (
         <Arrived arrived={arrived}>
         <ul className="feed" aria-live="polite">

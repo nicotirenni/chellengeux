@@ -190,10 +190,10 @@ export function TaskForm({ taskId }: { taskId?: string }) {
         </fieldset>
 
         {creating ? (
-          <Alert>Si no elegís a nadie, la tarea queda sin responsable y no se envía ningún aviso.</Alert>
+          <Alert>Si no elegís a nadie, la tarea queda sin responsable y no le avisamos a nadie.</Alert>
         ) : (
           notified.length > 0 && (
-            <Alert>{listNames(notified)} {notified.length === 1 ? 'recibe' : 'reciben'} un aviso al guardar la tarea.</Alert>
+            <Alert>Cuando guardes, {notified.length === 1 ? 'le' : 'les'} avisamos a {listNames(notified)}.</Alert>
           )
         )}
       </div>
@@ -231,7 +231,7 @@ export function TaskForm({ taskId }: { taskId?: string }) {
       </Drawer>
 
       {/* 5 · Cerrar sin guardar */}
-      <Drawer open={sheet === 'discard'} onClose={() => setSheet(null)} alert title="¿Descartar los cambios?" description="Lo que cambiaste en esta tarea no se va a guardar.">
+      <Drawer open={sheet === 'discard'} onClose={() => setSheet(null)} alert title="¿Descartar los cambios?" description="Si salís ahora, perdés lo que cambiaste.">
         <DrawerActions>
           <Button onClick={() => setSheet(null)} data-initial-focus>Seguir editando</Button>
           <Button variant="danger-outline" onClick={pop}>Descartar</Button>
