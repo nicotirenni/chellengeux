@@ -2,7 +2,7 @@
 // Playwright (Chromium, 390x844 @2x, táctil) → video → ffmpeg → gifs/NN-nombre.gif + .mp4
 import { chromium } from 'playwright-core';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, rmSync, statSync } from 'node:fs';
+import { mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 
 const BASE = (process.argv[2] ?? 'http://localhost:4175/').replace(/\/?$/, '/') + '?rec';
 const ONLY = process.argv[3]?.split(',');
@@ -55,7 +55,6 @@ async function record(name, desc, fn) {
   if (ONLY && !ONLY.some((o) => name.startsWith(o))) return;
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
-    recordVideo: { dir: TMP, size: { width: 780, height: 1688 } },
   });
   await ctx.addInitScript(VIZ);
   const t0 = Date.now();
@@ -64,12 +63,20 @@ async function record(name, desc, fn) {
   page.on('pageerror', (e) => errors.push(e.message));
   const cdp = await ctx.newCDPSession(page);
   const h = helpers(page, cdp);
+  // Captura con el screencast de Chrome a la resolución real del dispositivo (780x1688 @2x).
+  // (recordVideo de Playwright no escala: con un tamaño mayor al viewport deja la app en una esquina.)
+  const frames = [];
+  cdp.on('Page.screencastFrame', ({ data, metadata, sessionId }) => {
+    frames.push({ t: metadata.timestamp, data });
+    cdp.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
+  });
+  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 780, maxHeight: 1688, everyNthFrame: 1 });
   // Estado limpio: contexto nuevo y página recién cargada. Arranca cuando el Home ya trajo los datos.
   await page.goto(BASE);
   await page.waitForSelector('.home__content');
   // Margen para que el video ya tenga el Home completo en su primer cuadro.
   await page.waitForTimeout(1000);
-  const start = (Date.now() - t0) / 1000;
+  const startAt = Date.now() / 1000;
   await page.waitForTimeout(800);
   let note = '';
   try {
@@ -78,18 +85,31 @@ async function record(name, desc, fn) {
     note = `FALLÓ: ${e.message.split('\n')[0]}`;
   }
   await page.waitForTimeout(1200);
-  const dur = (Date.now() - t0) / 1000 - start;
-  const video = page.video();
+  const endAt = Date.now() / 1000;
+  const dur = endAt - startAt;
+  await cdp.send('Page.stopScreencast').catch(() => {});
   await ctx.close();
-  const src = await video.path();
-  const wall = (Date.now() - t0) / 1000;
-  const vdur = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', src]).toString());
+  // Cuadros con su duración real (Chrome solo emite cuadros cuando algo cambia).
+  const dir = `${TMP}${name}/`;
+  mkdirSync(dir, { recursive: true });
+  const first = Math.max(0, frames.findLastIndex((f) => f.t <= startAt));
+  const used = frames.slice(first).filter((f) => f.t < endAt);
+  let list = '';
+  used.forEach((f, i) => {
+    writeFileSync(`${dir}${i}.jpg`, Buffer.from(f.data, 'base64'));
+    const from = Math.max(f.t, startAt), to = i + 1 < used.length ? used[i + 1].t : endAt;
+    list += `file '${i}.jpg'\nduration ${Math.max(0.001, to - from).toFixed(4)}\n`;
+  });
+  list += `file '${used.length - 1}.jpg'\n`;
+  writeFileSync(`${dir}list.txt`, list);
+  const src = `${dir}src.mp4`;
   const gif = `${OUT}${name}.gif`, mp4 = `${OUT}${name}.mp4`;
   const ff = (args) => execFileSync('ffmpeg', ['-y', '-loglevel', 'error', ...args]);
-  ff(['-ss', start.toFixed(2), '-t', dur.toFixed(2), '-i', src, '-vf', 'fps=30', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-movflags', '+faststart', mp4]);
+  ff(['-f', 'concat', '-safe', '0', '-i', `${dir}list.txt`, '-vf', 'fps=30,scale=780:1688:flags=lanczos', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', src]);
+  ff(['-i', src, '-c', 'copy', '-movflags', '+faststart', mp4]);
   // GIF: 390 px, 15 fps, paleta por archivo. Si pasa de 4 MB, se baja el dithering.
   for (const dither of ['bayer:bayer_scale=5', 'bayer:bayer_scale=3', 'none']) {
-    ff(['-ss', start.toFixed(2), '-t', dur.toFixed(2), '-i', src, '-vf',
+    ff(['-i', src, '-vf',
       `fps=15,scale=390:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=${dither}:diff_mode=rectangle`, gif]);
     if (statSync(gif).size <= 4 * 1024 * 1024) break;
   }
