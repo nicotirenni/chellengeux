@@ -11,6 +11,8 @@ export type Task = {
   date: string;
   time: string;
   priority?: Priority;
+  /** Texto libre opcional (hasta 500 caracteres). Solo se ve en el Detalle. */
+  description?: string;
   /** Un cambio que otra persona guardó mientras Carla tenía la tarea abierta (F6 · 3a). */
   remoteEdit?: { by: string; time: string; minutesAgo: number };
 };
@@ -81,13 +83,13 @@ const rows = (eventId: string, prefix: string, list: Row[]): Task[] =>
  */
 export const seedTasks = (): Task[] => [
   ...rows('ocampo', 't', [
-    ['Definir DJ', 'progreso', 'Martín', '25 OCT', '15:30', { remoteEdit: { by: 'Martín', time: '16:00', minutesAgo: 2 } }],
-    ['Revisar lista de invitados', 'pendiente', 'Carla', '16 OCT', '12:20'],
-    ['Comprar hielo', 'pendiente', 'Martín', '25 OCT', '18:00', { priority: 'Media' }],
+    ['Definir DJ', 'progreso', 'Martín', '25 OCT', '15:30', { description: 'Pedir 3 presupuestos y confirmar con Sofía la lista de temas.', remoteEdit: { by: 'Martín', time: '16:00', minutesAgo: 2 } }],
+    ['Revisar lista de invitados', 'pendiente', 'Carla', '16 OCT', '12:20', { description: 'Cruzar la planilla con las confirmaciones por WhatsApp y marcar a quienes faltan responder.' }],
+    ['Comprar hielo', 'pendiente', 'Martín', '25 OCT', '18:00', { priority: 'Media', description: '20 bolsas de 5 kg. Coordinar la entrega con el salón antes de las 19.' }],
     ['Confirmar catering', 'finalizado', 'Pablo', '25 OCT', '10:00'],
   ]),
   ...rows('ocampo', 'o', [
-    ['Pagar al fotógrafo', 'pendiente', 'Pablo', '26 OCT', '11:00', { priority: 'Alta' }],
+    ['Pagar al fotógrafo', 'pendiente', 'Pablo', '26 OCT', '11:00', { priority: 'Alta', description: 'Saldo del 50 % por transferencia. Pedir factura a nombre de Matías.' }],
     ['Devolver los livings', 'pendiente', 'Pablo', '26 OCT', '16:00'],
     ['Retirar el vestido de la tintorería', 'pendiente', 'Sofía', '27 OCT', '10:00'],
     ['Enviar agradecimientos', 'pendiente', 'Lucía', '28 OCT', '18:00'],

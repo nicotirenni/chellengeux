@@ -64,3 +64,11 @@ select.field__input option { color: var(--color-text-primary); }
 .event-option__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .event-option__name { font: 600 15px/22px var(--font); color: var(--color-text-primary); }
 .event-option__meta { font: 400 13px/18px var(--font); color: var(--color-text-secondary); }
+
+/* Descripción: 96 px de base, crece hasta 4 líneas (15/22) y después scrollea por dentro. */
+.field__textarea {
+  display: block; height: 96px; min-height: 96px; max-height: 114px; padding: 12px 16px;
+  border-radius: 12px; resize: none; overflow-y: auto; line-height: 22px;
+}
+.field__textarea:focus { padding: 11px 15px; }
+.field__textarea::placeholder { color: var(--color-text-muted); }

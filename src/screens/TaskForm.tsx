@@ -14,6 +14,12 @@ const TIMES = Array.from({ length: 24 * 4 }, (_, i) => `${String(Math.floor(i / 
 /** F6 · 3a: Martín guarda su cambio cuando Carla lleva 6 s con la tarea abierta. */
 const CONFLICT_AFTER_MS = 6000;
 
+/** Crece con el texto (96 px de base, hasta 4 líneas) y después scrollea por dentro. */
+const grow = (el: HTMLTextAreaElement) => {
+  el.style.height = 'auto';
+  el.style.height = `${Math.min(Math.max(el.scrollHeight + 2, 96), 114)}px`;
+};
+
 const PRIORITIES: (Priority | undefined)[] = [undefined, 'Baja', 'Media', 'Alta'];
 
 /** F6 · 3. Editar tarea. Sin taskId, es Crear tarea: el mismo formulario con los campos vacíos. */
@@ -24,6 +30,7 @@ export function TaskForm({ taskId }: { taskId?: string }) {
   const [initial] = useState(() => ({
     eventId: task?.eventId ?? '',
     title: task?.title ?? '',
+    description: task?.description ?? '',
     date: task?.date ?? '',
     time: task?.time ?? '',
     assignee: task?.assignee ?? '',
@@ -53,7 +60,7 @@ export function TaskForm({ taskId }: { taskId?: string }) {
   const creating = !task;
 
   const dirty = (Object.keys(initial) as (keyof typeof initial)[]).some((k) =>
-    k === 'title' ? form.title.trim() !== initial.title : form[k] !== initial[k],
+    k === 'title' || k === 'description' ? form[k].trim() !== initial[k] : form[k] !== initial[k],
   );
   // Crear: Evento, Nombre, Fecha y Hora son obligatorios; Responsable es opcional.
   const valid = form.title.trim().length > 0 && !!form.eventId && !!form.date && !!form.time;
@@ -69,7 +76,7 @@ export function TaskForm({ taskId }: { taskId?: string }) {
     setSaving(true);
     savingRef.current = true;
     // Sin responsable, la tarea queda sin asignar y no se avisa a nadie.
-    const { eventId: evId, ...fields } = { ...form, title: form.title.trim() };
+    const { eventId: evId, ...fields } = { ...form, title: form.title.trim(), description: form.description.trim() || undefined };
     const ok = task ? await updateTask(task.id, fields) : await createTask({ eventId: evId, ...fields });
     setSaving(false);
     savingRef.current = false;
@@ -126,6 +133,22 @@ export function TaskForm({ taskId }: { taskId?: string }) {
             aria-invalid={(!creating && !form.title.trim()) || undefined}
           />
           {!creating && !form.title.trim() && <span className="field__error t-leyenda"><Icon name="alert" size={20} />Escribí un nombre</span>}
+        </label>
+
+        <label className="field">
+          <span className="field__label t-leyenda">Descripción (opcional)</span>
+          <textarea
+            className="field__input field__textarea t-cuerpo"
+            value={form.description}
+            maxLength={500}
+            rows={3}
+            placeholder="Agregá detalles, links o lo que haga falta."
+            onChange={(e) => {
+              set({ description: e.target.value });
+              grow(e.target);
+            }}
+            ref={(el) => el && grow(el)}
+          />
         </label>
 
         <fieldset className="field">

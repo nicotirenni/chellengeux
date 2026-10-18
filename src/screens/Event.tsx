@@ -332,6 +332,12 @@ export function EventScreen({ eventId, active, openTaskId }: { eventId: string; 
                 <dd>{ev.name}</dd>
               </div>
             </dl>
+            {sheetTask.description && (
+              <div className="detail__desc">
+                <span className="t-leyenda">Descripción</span>
+                <p className="t-cuerpo">{sheetTask.description}</p>
+              </div>
+            )}
             <Button variant="secondary" icon="edit" onClick={() => edit(sheetTask.id)}>Editar</Button>
           </>
         )}

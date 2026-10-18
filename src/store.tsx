@@ -28,8 +28,8 @@ export type Activity = {
   at: number;
 };
 
-export type TaskPatch = Partial<Pick<Task, 'title' | 'date' | 'time' | 'assignee' | 'priority'>>;
-export type NewTask = { eventId: string; title: string; date: string; time: string; assignee: string; priority?: Priority };
+export type TaskPatch = Partial<Pick<Task, 'title' | 'date' | 'time' | 'assignee' | 'priority' | 'description'>>;
+export type NewTask = { eventId: string; title: string; date: string; time: string; assignee: string; priority?: Priority; description?: string };
 export type NewEvent = { type: string; name: string; date: string; iso: string; people: string[] };
 export type EventPatch = { type: string; name: string; date: string; iso: string };
 
